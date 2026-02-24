@@ -1,0 +1,22 @@
+module cloth.math;
+
+import std.io;
+
+public final class Math() {
+
+    private {
+        final var myMathVar: f32 = 3.14159;
+    }
+
+    public static {
+        final var PI: f32 = 3.14159;
+        final var TAU: f32 = 2.0 * PI;
+        final var E: f32 = 2.71828;
+        final var PHI: f32 = 1.61803;
+
+        func method(): void {
+            var a: f32 = PI;
+        }
+    }
+
+}
