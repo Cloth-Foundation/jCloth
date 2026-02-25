@@ -1,6 +1,7 @@
 package cloth.error;
 
  import cloth.token.span.SourceLocation;
+ import cloth.token.span.SourceSpan;
 
 /**
  * DiagnosticSink is a utility class used for reporting errors and warnings to the user.
@@ -26,8 +27,24 @@ public class DiagnosticSink {
          System.err.println(format("error", location, message));
      }
 
+     public void error(SourceSpan span, String message) {
+         if (span == null) {
+             System.err.println("error: " + message);
+             return;
+         }
+         error(span.start(), message);
+     }
+
      public void warning(SourceLocation location, String message) {
          System.err.println(format("warning", location, message));
+     }
+
+     public void warning(SourceSpan span, String message) {
+         if (span == null) {
+             System.err.println("warning: " + message);
+             return;
+         }
+         warning(span.start(), message);
      }
 
      private String format(String level, SourceLocation location, String message) {

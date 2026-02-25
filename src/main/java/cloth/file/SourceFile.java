@@ -2,6 +2,7 @@ package cloth.file;
 
 import lombok.Getter;
 
+import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -85,6 +86,14 @@ public class SourceFile {
     private static String normalizePath(String path) {
         if (path == null) return "";
         return path.trim();
+    }
+    
+    public String getAbsolutePath() {
+        return Path.of(path).toAbsolutePath().toString();
+    }
+
+    public File getFile() {
+        return new File(path);
     }
 
 }

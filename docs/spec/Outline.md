@@ -528,6 +528,82 @@ A Cloth source file is a sequence of tokens that, after parsing, forms a compila
 At the top level, a file contains only declarations.
 Executable statements are not permitted at the top level.
 
+---
+
+### 3.0 Parsing Model and Expectations
+
+This section defines what a conforming Cloth implementation is expected to do when parsing a token stream into an internal representation of a program.
+
+Cloth is intended to be compiled by lowering programs to an intermediate representation (IR) suitable for native code generation. The primary compilation strategy for the reference implementation is to emit **LLVM IR**.
+
+This is an implementation strategy and does not, by itself, define additional source-level semantics. Source-level behavior remains governed by the rules in this specification.
+
+The purpose of this section is not to mandate a specific internal AST layout, but to require consistent and predictable behavior for:
+
+* how tokens are interpreted into syntactic structures,
+* how implementations handle syntax errors,
+* when declarations are considered to exist for name lookup.
+
+#### 3.0.1 Parser input
+
+Rules:
+
+* The parser input is the ordered token stream produced by the lexer.
+* The parser MUST treat `EndOfFile` as the end of the token stream.
+* The parser MUST NOT depend on whitespace or comments unless those are explicitly emitted as tokens by the chosen lexer configuration.
+* If the lexer emits `Error` tokens, the parser MAY attempt to continue parsing, but it MUST report at least one diagnostic for the lexical error.
+
+#### 3.0.2 Source locations in syntax trees
+
+Rules:
+
+* A conforming implementation MUST associate each parsed declaration and expression/statement node with a source span that is sufficient to report diagnostics.
+* When a syntax error is reported, the diagnostic MUST include a source location that refers to either:
+  * the unexpected token, or
+  * the position where a required token was expected.
+
+#### 3.0.3 Two-stage front-end model (recommended)
+
+To support deterministic name lookup and forward references within a compilation unit, a conforming implementation SHOULD conceptually split the front-end into two stages:
+
+Stage 1: declaration discovery
+
+* The implementation identifies all top-level type declarations and the set of member declarations within each type (including nested types).
+* During this stage, the implementation MUST establish which names are declared, their kinds (type/field/method/etc.), and their declared signatures.
+* Implementations MAY postpone parsing of method bodies, initializer bodies, and other executable blocks until Stage 2.
+
+Stage 2: body parsing and body checking
+
+* The implementation parses method bodies and other executable blocks.
+* Name lookup inside bodies MUST be performed against the declarations discovered in Stage 1 together with locals introduced by statements.
+
+This model is conceptual. An implementation MAY interleave these operations as long as the resulting visible behavior (including diagnostics and name lookup) is consistent with the rules above.
+
+#### 3.0.4 Determinism and disambiguation
+
+Rules:
+
+* Parsing MUST be deterministic. Given the same token stream, a conforming implementation MUST produce the same parse result and MUST report the same required diagnostics.
+* If a token sequence can be interpreted in multiple ways, the specification MUST define a single interpretation. If no single interpretation is defined, the construct is invalid and MUST be rejected.
+
+#### 3.0.5 Error handling and recovery
+
+Rules:
+
+* When a syntax error is encountered, a conforming implementation MUST report a diagnostic.
+* After reporting a syntax error, an implementation SHOULD attempt to recover and continue parsing so that additional errors can be reported in the same compilation unit.
+
+Recommended recovery points:
+
+* statement terminator `;`
+* closing delimiters `)` `]` `}`
+* the beginning of a top-level declaration (`module`, `import`, `class`, `struct`, `enum`, `interface`)
+
+Required errors:
+
+* Unexpected token in a context where no valid production exists.
+* Unterminated delimiter constructs (for example, missing `)` for `(`, missing `}` for `{`).
+
 ### 3.1 Modules
 
 A file MAY declare a module using:
@@ -1674,19 +1750,81 @@ Required errors:
 
 ---
 
+### 7.8.1 Ternary Conditional Expressions
+
+Cloth supports a ternary conditional expression form.
+
+Syntax:
+
+```text
+ConditionExpression "?" ThenExpression ":" ElseExpression
+```
+
+Rules:
+
+* The condition expression MUST have type `bool`.
+* The condition expression is evaluated first.
+* If the condition evaluates to `true`, the then-expression is evaluated and becomes the result.
+* If the condition evaluates to `false`, the else-expression is evaluated and becomes the result.
+* Exactly one of the two branch expressions is evaluated.
+
+Typing:
+
+* If the then-expression type and else-expression type are identical, the ternary expression has that type.
+* Otherwise, if one branch type is assignable to the other branch type, the ternary expression has the assignable-to (supertype) type.
+* Otherwise, the program is invalid.
+
+Required errors:
+
+* A ternary condition expression whose condition is not `bool`.
+* A ternary expression whose branch types are not compatible according to the typing rules above.
+
+---
+
+### 7.8.2 Pointer Arithmetic
+
+Cloth supports C-like pointer arithmetic.
+
+Rules:
+
+* Pointer arithmetic is only defined for pointer-typed expressions and integer-typed expressions.
+* `ptr + n` and `ptr - n` yield a pointer value with the same pointer type as `ptr`.
+* The integer offset is interpreted in units of the pointed-to element size (for typed pointers).
+* `ptr1 - ptr2` is only defined when both operands have the same pointer type, and yields the signed element-distance between the pointers.
+
+Evaluation order:
+
+* The left operand is evaluated before the right operand.
+
+Notes:
+
+* The exact behavior of pointer arithmetic with out-of-bounds pointers is implementation-defined until the memory and safety model is fully specified.
+
+Required errors:
+
+* Applying `+` or `-` where neither operand is a pointer.
+* Adding two pointers.
+* Subtracting pointers of different pointer types.
+
+---
+
 ### 7.9 Operator Precedence
 
 Operators are evaluated according to the following precedence table (highest first):
 
-| Level | Operators         | Associativity |
-|-------|-------------------|---------------|
-| 1     | `()` `[]` `.`     | Left          |
-| 2     | `new`             | Right         |
-| 3     | Unary `-` `!`     | Right         |
-| 4     | `*` `/` `%`       | Left          |
-| 5     | `+` `-`           | Left          |
-| 6     | `<` `<=` `>` `>=` | Left          |
-| 7     | `==` `!=`         | Left          |
+| Level | Operators                   | Associativity |
+|-------|-----------------------------|---------------|
+| 1     | `()` `[]` `.`               | Left          |
+| 2     | `new`                       | Right         |
+| 3     | Unary `-` `!`               | Right         |
+| 4     | `*` `/` `%`                 | Left          |
+| 5     | `+` `-`                     | Left          |
+| 6     | `as`                        | Left          |
+| 7     | `<` `<=` `>` `>=`           | Left          |
+| 8     | `==` `!=`                   | Left          |
+| 9     | `and`                       | Left          |
+| 10    | `or`                        | Left          |
+| 11    | `?:`                        | Right         |
 
 Cloth intentionally omits assignment from the precedence hierarchy.
 
@@ -1863,18 +2001,19 @@ Required errors:
 
 The `as` operator has lower precedence than arithmetic but higher precedence than logical operators.
 
-| Level | Operators         | Associativity |
-|-------|-------------------|---------------|
-| 1     | `()` `[]` `.`     | Left          |
-| 2     | `new`             | Right         |
-| 3     | Unary `-` `!`     | Right         |
-| 4     | `*` `/` `%`       | Left          |
-| 5     | `+` `-`           | Left          |
-| 6     | `as`              | Left          |
-| 7     | `<` `<=` `>` `>=` | Left          |
-| 8     | `==` `!=`         | Left          |
-| 9     | `and`             | Left          |
-| 10    | `or`              | Left          |
+| Level | Operators                   | Associativity |
+|-------|-----------------------------|---------------|
+| 1     | `()` `[]` `.`               | Left          |
+| 2     | `new`                       | Right         |
+| 3     | Unary `-` `!`               | Right         |
+| 4     | `*` `/` `%`                 | Left          |
+| 5     | `+` `-`                     | Left          |
+| 6     | `as`                        | Left          |
+| 7     | `<` `<=` `>` `>=`           | Left          |
+| 8     | `==` `!=`                   | Left          |
+| 9     | `and`                       | Left          |
+| 10    | `or`                        | Left          |
+| 11    | `?:`                        | Right         |
 
 ---
 

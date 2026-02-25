@@ -4,8 +4,8 @@ import std.io;
 
 public final class Math() {
 
-    private {
-        final var myMathVar: f32 = 3.14159;
+    private static {
+        final var myMathVar: f32 = f32::MAX;
     }
 
     public static {
