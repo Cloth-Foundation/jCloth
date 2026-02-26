@@ -41,3 +41,6 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### Since we are porting from CPP, the old project files exist, but should not be included.
+old_c_code

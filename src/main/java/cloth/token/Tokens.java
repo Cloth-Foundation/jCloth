@@ -14,7 +14,7 @@ public class Tokens {
      * Defines a set of keywords used in the programming language, categorized into
      * various groups such as control flow, data types, storage modifiers,
      * and miscellaneous constructs.
-     *
+     * <p>
      * Each keyword represents a specific reserved word in the language and provides
      * utility methods to classify and retrieve information about the keyword.
      */
@@ -63,22 +63,60 @@ public class Tokens {
         Atomic, Shared, Owned,
         This, Super;
 
+        /**
+         * Determines if the current instance represents a valid programming language keyword.
+         *
+         * @return {@code true} if the instance is a keyword, {@code false} if it is {@code None}.
+         */
         public boolean isKeyword() {
             return this != None;
         }
 
+        /**
+         * Determines if the current instance represents a keyword classified as a "modifier".
+         * Modifiers are specific keywords that adjust or define the properties or behavior
+         * of other programming constructs, such as classes, methods, or variables.
+         *
+         * @return true if the instance is one of the predefined modifier keywords
+         *         (Absolute, Abstract, Override, or Final); false otherwise.
+         */
         public boolean isModifier() {
             return this == Absolute || this == Abstract || this == Override || this == Final;
         }
 
+        /**
+         * Determines if the current instance represents a type modifier keyword.
+         * Type modifiers are specific keywords that define ownership or usage
+         * semantics typically scoped to types or variables.
+         *
+         * @return true if the instance is either {@code Shared} or {@code Owned};
+         *         false otherwise.
+         */
         public boolean isTypeModifier() {
             return this == Shared || this == Owned;
         }
 
+        /**
+         * Determines if the current instance represents a keyword classified
+         * as a "storage modifier." Storage modifiers are specific keywords
+         * that define access levels or storage declarations related to
+         * programming constructs, such as variables or functions.
+         *
+         * @return true if the instance is one of the predefined storage
+         *         modifier keywords (Static, Public, Private, or Internal);
+         *         false otherwise.
+         */
         public boolean isStorageModifier() {
             return this == Static || this == Public || this == Private || this == Internal;
         }
 
+        /**
+         * Converts the name of the current instance to its lowercase representation.
+         * This can be useful for cases where a consistent format for keyword handling
+         * is required.
+         *
+         * @return a string containing the lowercase representation of the current instance's name.
+         */
         public String getKeyword() {
             return name().toLowerCase();
         }
@@ -110,13 +148,36 @@ public class Tokens {
 
         ColonColon("::"), DotDot(".."), DotDotDot("...");
 
+        /**
+         * Represents the textual symbol associated with an operator.
+         * This symbol corresponds to the exact string representation of the operator
+         * as it appears in the source code (e.g., "+", "-", "*", "==", etc.).
+         * It is used to uniquely identify the operator for lexical and syntactic analysis.
+         */
         @Getter
         private final String symbol;
 
+        /**
+         * Constructs an {@code Operator} with the specified symbol.
+         * The symbol represents the textual string associated with the operator,
+         * which is typically used to identify the operator during lexical analysis.
+         *
+         * @param symbol the string representation of the operator, or {@code null} if the operator has no associated symbol.
+         */
         Operator(@Nullable final String symbol) {
             this.symbol = symbol;
         }
 
+        /**
+         * Determines whether the current enum instance represents an operator.
+         * <p>
+         * In the context of the {@code Operator} enum, all instances except {@code None}
+         * are considered to represent valid operators. This method can be used to
+         * distinguish meaningful operators from placeholder or default values.
+         *
+         * @return {@code true} if the current enum instance is not {@code None}, indicating
+         *         that it represents a valid operator; otherwise {@code false}.
+         */
         public boolean isOperator() {
             return this != None;
         }

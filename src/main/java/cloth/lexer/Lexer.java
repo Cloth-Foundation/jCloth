@@ -12,6 +12,7 @@ import cloth.token.meta.MetaToken;
 import cloth.token.span.SourceLocation;
 import cloth.token.span.SourceSpan;
 import lombok.Getter;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
@@ -127,6 +128,9 @@ public final class Lexer {
     @Getter
     private final LexerOptions options;
 
+    @Nullable
+    private IToken previousToken = null;
+
     public Lexer(SourceBuffer buffer, DiagnosticSink diagnostics, LexerOptions options) {
         this.buffer = buffer;
         this.diagnostics = diagnostics;
@@ -146,10 +150,14 @@ public final class Lexer {
         this.tokenColumn = 1;
     }
 
+    public IToken getPreviousToken() {
+        return previousToken;
+    }
+
     /**
      * Retrieves a lookahead lexical token at a specified position relative to the current
      * head of the lookahead buffer.
-     *
+     * <p>
      * This method ensures that the lookahead buffer contains at least the required number
      * of tokens by invoking the {@code fillLookAhead} method. The token is then accessed
      * from the buffer using a calculated index.
@@ -179,6 +187,7 @@ public final class Lexer {
         LexedToken out = lookaheadTokens[lookaheadIndex];
         lookaheadIndex = (lookaheadIndex + 1) % kLookahead;
         lookaheadCount--;
+        previousToken = out.token();
         return out;
     }
 

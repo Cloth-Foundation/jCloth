@@ -10,11 +10,11 @@ package cloth.token.span;
 public record SourceSpan(SourceLocation start, SourceLocation end) {
 
     public boolean isValid() {
-        return start().getFile() == end().getFile() && end().getOffset() >= start().getOffset();
+        return start().file() == end().file() && end().offset() >= start().offset();
     }
 
     public int getLength() {
-        return isValid() ? end().getOffset() - start().getOffset() : 0;
+        return isValid() ? end().offset() - start().offset() : 0;
     }
 
 }

@@ -49,7 +49,7 @@ public class DiagnosticSink {
 
      private String format(String level, SourceLocation location, String message) {
          if (location == null) return level + ": " + message;
-         String fileName = (location.getFile() == null) ? "<unknown>" : location.getFile().getName();
-         return fileName + ":" + location.getLine() + ":" + location.getColumn() + ": " + level + ": " + message;
+         String fileName = (location.file() == null) ? "<unknown>" : location.file().getName();
+         return fileName + ":" + location.line() + ":" + location.column() + ": " + level + ": " + message;
      }
 }
