@@ -14,6 +14,10 @@ import java.util.List;
  */
 public enum ArgFlags {
 
+    // This is mostly only for file linking for errors.
+    // JetBrains requires a file path to state its full qualified path (e.g. C:/my/file/path/myFile.co).
+    // This does not seem to be an issue in Visual Studio IDEs. This flag forces error printing
+    // to print in the JetBrains style.
     JETBRAINS_TERMINAL(Flags.JETBRAINS_TERMINAL),
     FILE(Flags.FILE);
 
