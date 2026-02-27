@@ -120,6 +120,11 @@ public class Tokens {
         public String getKeyword() {
             return name().toLowerCase();
         }
+
+        @Override
+        public String toString() {
+            return getKeyword();
+        }
     }
 
     /**
@@ -180,6 +185,11 @@ public class Tokens {
          */
         public boolean isOperator() {
             return this != None;
+        }
+
+        @Override
+        public String toString() {
+            return symbol;
         }
     }
 

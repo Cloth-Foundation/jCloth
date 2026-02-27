@@ -1,4 +1,4 @@
-package cloth.parser;
+package cloth.parser.flags;
 
 import cloth.token.Token;
 import lombok.Getter;

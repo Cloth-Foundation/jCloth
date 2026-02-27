@@ -13,7 +13,7 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class LexerPreviousTokenTest {
+public class LexerTest {
 
     @TempDir
     Path tempDir;

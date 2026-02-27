@@ -957,13 +957,23 @@ Compilation MUST fail for any of the following:
 Class declarations have the form:
 
 ```cloth
-[visibility] class <Name>(<primary_constructor_params>) { <members> }
+[visibility] [abstract|final]? class <Name> [(<primary_constructor_params>)]? [: <BaseClass>(<base_args>)]? [is <Interface>, ...]? { <members> }
 ```
+
+Where:
+
+* `visibility` is an optional visibility modifier (`public`, `internal`, or `private`).
+* `abstract` or `final` are optional class modifiers.
+* `Name` is the declared name of the class.
+* `(<primary_constructor_params>)` is an optional primary constructor parameter list.
+* `: <BaseClass>(<base_args>)` is an optional base class inheritance clause.
+* `is <Interface>, ...` is an optional interface implementation clause using the `is` keyword.
 
 Example:
 
 ```cloth
 public class Main(args: string[]) { }
+public class Dog(): Animal("Kibble") is Serializable { }
 ```
 
 #### 5.1.1 Primary constructors
@@ -1357,20 +1367,22 @@ Interface method declarations:
 
 #### 5.7.2 Implementing interfaces
 
-Classes and structs MAY implement one or more interfaces.
+Classes and structs MAY implement one or more interfaces using the `is` keyword.
 
 Implementation clause syntax (v1):
 
 ```cloth
-class C(): Base(...), I1, I2 { ... }
-struct S(...): I1, I2 { ... }
+class C(): Base(...) is I1, I2 { ... }
+struct S(...) is I1, I2 { ... }
 ```
+
+The `is` keyword introduces the interface implementation list, which is separate from the base class inheritance clause (`:` with constructor arguments).
 
 Rules:
 
-* At most one base class constructor call may appear and it MUST appear first after `:`.
-* Any remaining items after the optional base call MUST be interface type names.
-* An interface type name in the implementation clause MUST NOT have constructor arguments.
+* Base class inheritance uses `:` followed by the base class name and constructor arguments.
+* Interface implementation uses `is` followed by a comma-separated list of interface type names.
+* The `is` clause MUST appear after the base class clause (if present) and before the class body.
 * A type MUST NOT list the same interface more than once.
 
 #### 5.7.3 Conformance requirements
@@ -2708,15 +2720,17 @@ Cloth is class-centric. All executable behavior is declared inside classes.
 A class declaration has the form:
 
 ```text
-[Visibility] class Name [InheritanceClause]? PrimaryConstructor? ClassBody
-````
+[Visibility] [abstract|final]? class Name PrimaryConstructor? [: BaseClass(base_args)]? [is Interface, ...]? ClassBody
+```
 
 Where:
 
 * `Visibility` is an optional visibility modifier (`public`, `internal`, or `private`).
+* `abstract` or `final` are optional class modifiers.
 * `Name` is the declared name of the class.
-* `InheritanceClause` (if present) specifies a single base class and any required base-construction arguments.
 * `PrimaryConstructor` (if present) is the class header parameter list.
+* `: BaseClass(base_args)` (if present) specifies a single base class and any required base-construction arguments.
+* `is Interface, ...` (if present) specifies one or more interfaces the class implements, using the `is` keyword.
 * `ClassBody` contains zero or more member declarations.
 
 Rules:
@@ -2737,6 +2751,7 @@ Examples:
 ```cloth
 public class Main(args: string[]) { }
 class Animal(food: string) { }
+class Dog(): Animal("Kibble") is Serializable { }
 ```
 
 #### 9.1.1 Primary Constructors
@@ -3117,10 +3132,18 @@ Inheritance is expressed in the class header using an inheritance clause.
 
 #### 9.6.4.1 Inheritance clause syntax
 
-If a class has a base class, it is written after the primary constructor parameter list:
+If a class has a base class, it is written after the primary constructor parameter list using `:`:
 
 ```cloth
 class Derived(<primary_params>): Base(<base_args>) {
+    ...
+}
+```
+
+If a class implements interfaces, they are listed after the `is` keyword:
+
+```cloth
+class Derived(<primary_params>): Base(<base_args>) is I1, I2 {
     ...
 }
 ```
@@ -3129,6 +3152,9 @@ Notes:
 
 * The base constructor call (the `Base(<base_args>)` portion) is part of the class declaration syntax.
 * It is not a statement and is not executed by user code; it defines construction wiring for the type.
+* The `:` clause is exclusively for base class inheritance (with constructor arguments).
+* The `is` clause is exclusively for interface implementation (comma-separated list of interface names).
+* Both clauses are optional and independent. A class may have a base class without interfaces, interfaces without a base class, both, or neither.
 
 Example:
 
@@ -3139,7 +3165,7 @@ class Animal(food: string) {
     }
 }
 
-class Dog(): Animal("Kibble") {
+class Dog(): Animal("Kibble") is Serializable {
     override func eat(): void {
         println("The dog is eating " + this.food);
     }
