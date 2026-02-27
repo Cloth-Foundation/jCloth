@@ -12,6 +12,7 @@ import cloth.token.Tokens;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("unused")
 public class Parser extends ParserPart<Parser> {
 
     public Parser(Lexer lexer, SourceFile file) {

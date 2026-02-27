@@ -17,7 +17,7 @@ import cloth.token.span.SourceSpan;
  * <p>
  * The type of this error is always {@link ErrorType#COMPILE_ERROR}.
  */
-public class CompileError extends Error implements Diagnostic {
+public class CompileError extends Error {
 
     public CompileError(String message, SourceSpan span, String label, String help) {
         super(message, span, label, help);
