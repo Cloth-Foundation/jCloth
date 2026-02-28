@@ -5,6 +5,14 @@
 Cloth is designed to combine the **clarity and structure of Java** with the **control and performance of C**, without the complexity, inconsistency, and historical baggage of C++.
 
 ---
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/Cloth-Foundation/jCloth/gradle.yml?style=for-the-badge)
+![GitHub License](https://img.shields.io/github/license/Cloth-Foundation/jCloth?style=for-the-badge)
+![GitHub Repo stars](https://img.shields.io/github/stars/Cloth-Foundation/jCloth?style=for-the-badge)
+![GitHub forks](https://img.shields.io/github/forks/Cloth-Foundation/jCloth?style=for-the-badge)
+![GitHub contributors](https://img.shields.io/github/contributors/Cloth-Foundation/jCloth?style=for-the-badge)
+![GitHub repo size](https://img.shields.io/github/repo-size/Cloth-Foundation/jCloth?style=for-the-badge)
+
+---
 
 ## What is Cloth?
 
