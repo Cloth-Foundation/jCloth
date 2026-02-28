@@ -2,7 +2,6 @@ package cloth;
 
 import cloth.args.ArgParser;
 import cloth.error.DiagnosticSink;
-import cloth.error.Error;
 import cloth.file.SourceFile;
 import cloth.lexer.Lexer;
 import cloth.lexer.LexerOptions;
@@ -19,7 +18,7 @@ public class Main {
     @Getter
     private static ArgParser parser;
 
-    public static void main(String[] args) throws Error {
+    public static void main(String[] args) {
         ConsoleIO.forceUtf8();
         parser = new ArgParser();
         getParser().parse(args);

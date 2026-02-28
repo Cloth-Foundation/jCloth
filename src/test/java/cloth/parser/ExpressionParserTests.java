@@ -182,7 +182,6 @@ public class ExpressionParserTests {
 
     @Test
     public void testMulBeforeAdd() throws IOException {
-        // a + b * c  =>  a + (b * c)
         var expr = parseExpr("a + b * c");
         assertInstanceOf(Expression.Binary.class, expr);
         var add = (Expression.Binary) expr;
@@ -195,7 +194,6 @@ public class ExpressionParserTests {
 
     @Test
     public void testMulBeforeAddReversed() throws IOException {
-        // a * b + c  =>  (a * b) + c
         var expr = parseExpr("a * b + c");
         assertInstanceOf(Expression.Binary.class, expr);
         var add = (Expression.Binary) expr;
@@ -206,7 +204,6 @@ public class ExpressionParserTests {
 
     @Test
     public void testAddLeftAssociative() throws IOException {
-        // a + b + c  =>  (a + b) + c
         var expr = parseExpr("a + b + c");
         assertInstanceOf(Expression.Binary.class, expr);
         var outer = (Expression.Binary) expr;
@@ -218,7 +215,6 @@ public class ExpressionParserTests {
 
     @Test
     public void testMulLeftAssociative() throws IOException {
-        // a * b * c  =>  (a * b) * c
         var expr = parseExpr("a * b * c");
         assertInstanceOf(Expression.Binary.class, expr);
         var outer = (Expression.Binary) expr;
@@ -228,7 +224,6 @@ public class ExpressionParserTests {
 
     @Test
     public void testComparisonBelowArithmetic() throws IOException {
-        // a + b > c  =>  (a + b) > c
         var expr = parseExpr("a + b > c");
         assertInstanceOf(Expression.Binary.class, expr);
         var cmp = (Expression.Binary) expr;
@@ -238,7 +233,6 @@ public class ExpressionParserTests {
 
     @Test
     public void testEqualityBelowComparison() throws IOException {
-        // a > b == c > d  =>  (a > b) == (c > d)
         var expr = parseExpr("a > b == c > d");
         assertInstanceOf(Expression.Binary.class, expr);
         var eq = (Expression.Binary) expr;
@@ -248,7 +242,6 @@ public class ExpressionParserTests {
 
     @Test
     public void testAndBelowEquality() throws IOException {
-        // a == b and c == d  =>  (a == b) and (c == d)
         var expr = parseExpr("a == b and c == d");
         assertInstanceOf(Expression.Binary.class, expr);
         var andExpr = (Expression.Binary) expr;
@@ -259,7 +252,6 @@ public class ExpressionParserTests {
 
     @Test
     public void testOrBelowAnd() throws IOException {
-        // a and b or c and d  =>  (a and b) or (c and d)
         var expr = parseExpr("a and b or c and d");
         assertInstanceOf(Expression.Binary.class, expr);
         var orExpr = (Expression.Binary) expr;
@@ -270,7 +262,6 @@ public class ExpressionParserTests {
 
     @Test
     public void testUnaryBindsTighterThanBinary() throws IOException {
-        // -a + b  =>  (-a) + b
         var expr = parseExpr("-a + b");
         assertInstanceOf(Expression.Binary.class, expr);
         var add = (Expression.Binary) expr;
@@ -342,7 +333,6 @@ public class ExpressionParserTests {
 
     @Test
     public void testTernaryRightAssociative() throws IOException {
-        // a ? b : c ? d : e  =>  a ? b : (c ? d : e)
         var expr = parseExpr("a ? b : c ? d : e");
         assertInstanceOf(Expression.Ternary.class, expr);
         var outer = (Expression.Ternary) expr;
@@ -351,7 +341,6 @@ public class ExpressionParserTests {
 
     @Test
     public void testTernaryWithExpressions() throws IOException {
-        // x > 0 ? x : -x
         var expr = parseExpr("x > 0 ? x : -x");
         assertInstanceOf(Expression.Ternary.class, expr);
         var tern = (Expression.Ternary) expr;
@@ -375,9 +364,6 @@ public class ExpressionParserTests {
 
     @Test
     public void testCastPrecedence() throws IOException {
-        // a + b as i32  =>  a + (b as i32)  (as binds tighter than +? no -- as is level 6, + is level 5)
-        // Actually: spec says as has LOWER precedence than arithmetic.
-        // a + b as i32  =>  (a + b) as i32
         var expr = parseExpr("a + b as i32");
         assertInstanceOf(Expression.Cast.class, expr);
         var cast = (Expression.Cast) expr;
@@ -438,7 +424,6 @@ public class ExpressionParserTests {
 
     @Test
     public void testChainedMemberAccess() throws IOException {
-        // a.b.c  =>  (a.b).c
         var expr = parseExpr("a.b.c");
         assertInstanceOf(Expression.MemberAccess.class, expr);
         var outer = (Expression.MemberAccess) expr;
@@ -450,7 +435,6 @@ public class ExpressionParserTests {
 
     @Test
     public void testMemberAccessOnCall() throws IOException {
-        // foo().bar
         var expr = parseExpr("foo().bar");
         assertInstanceOf(Expression.MemberAccess.class, expr);
         var ma = (Expression.MemberAccess) expr;
@@ -481,7 +465,6 @@ public class ExpressionParserTests {
 
     @Test
     public void testChainedCalls() throws IOException {
-        // a()()
         var expr = parseExpr("a()()");
         assertInstanceOf(Expression.Call.class, expr);
         var outer = (Expression.Call) expr;
@@ -490,7 +473,6 @@ public class ExpressionParserTests {
 
     @Test
     public void testMethodCall() throws IOException {
-        // obj.method(arg)
         var expr = parseExpr("obj.method(arg)");
         assertInstanceOf(Expression.Call.class, expr);
         var call = (Expression.Call) expr;
@@ -513,7 +495,6 @@ public class ExpressionParserTests {
 
     @Test
     public void testChainedIndex() throws IOException {
-        // matrix[row][col]
         var expr = parseExpr("matrix[row][col]");
         assertInstanceOf(Expression.Index.class, expr);
         var outer = (Expression.Index) expr;
@@ -540,7 +521,6 @@ public class ExpressionParserTests {
 
     @Test
     public void testGroupOverridesPrecedence() throws IOException {
-        // (a + b) * c  =>  group(a+b) * c
         var expr = parseExpr("(a + b) * c");
         assertInstanceOf(Expression.Binary.class, expr);
         var mul = (Expression.Binary) expr;
@@ -554,9 +534,6 @@ public class ExpressionParserTests {
 
     @Test
     public void testComplexPrecedence() throws IOException {
-        // a + b * c == d and e or f
-        // => ((a + (b * c)) == d) and e) or f
-        // => (((a + (b * c)) == d) and e) or f
         var expr = parseExpr("a + b * c == d and e or f");
         assertInstanceOf(Expression.Binary.class, expr);
         var orExpr = (Expression.Binary) expr;
@@ -565,11 +542,8 @@ public class ExpressionParserTests {
 
     @Test
     public void testCallOnNewExpr() throws IOException {
-        // new Foo().bar()
         var expr = parseExpr("new Foo().bar()");
-        // new binds to Foo() as its arg list, then .bar() is postfix
-        // Actually: `new` consumes type + arglist, producing NewExpr(Foo, []).
-        // Then .bar is member access on the NewExpr, then () is a call.
+
         assertInstanceOf(Expression.Call.class, expr);
         var call = (Expression.Call) expr;
         assertInstanceOf(Expression.MemberAccess.class, call.callee());
@@ -579,7 +553,6 @@ public class ExpressionParserTests {
 
     @Test
     public void testUnaryInsideBinaryInsideTernary() throws IOException {
-        // a > 0 ? -a : a * 2
         var expr = parseExpr("a > 0 ? -a : a * 2");
         assertInstanceOf(Expression.Ternary.class, expr);
         var tern = (Expression.Ternary) expr;

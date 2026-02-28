@@ -114,7 +114,7 @@ public class EnumParserTests {
 
         assertEquals(2, result.cases().size());
 
-        var circle = result.cases().get(0);
+        var circle = result.cases().getFirst();
         assertEquals("Circle", circle.name().lexeme());
         assertNotNull(circle.payload());
         assertEquals(1, circle.payload().size());
@@ -170,7 +170,7 @@ public class EnumParserTests {
 
         assertEquals(3, result.cases().size());
 
-        var ok = result.cases().get(0);
+        var ok = result.cases().getFirst();
         assertEquals("Ok", ok.name().lexeme());
         assertNotNull(ok.discriminant());
         assertEquals("200", ((Expression.Literal) ok.discriminant()).value().lexeme());
@@ -198,7 +198,7 @@ public class EnumParserTests {
     public void testDataCaseWithDiscriminant() throws IOException {
         var result = parseEnum("enum Http { Ok(body: string) = 200, Error(msg: string) = 500 }");
 
-        var ok = result.cases().get(0);
+        var ok = result.cases().getFirst();
         assertEquals("Ok", ok.name().lexeme());
         assertNotNull(ok.payload());
         assertEquals(1, ok.payload().size());
@@ -303,7 +303,7 @@ public class EnumParserTests {
 
         assertEquals(2, result.cases().size());
 
-        var earth = result.cases().get(0);
+        var earth = result.cases().getFirst();
         assertEquals("Earth", earth.name().lexeme());
         assertNotNull(earth.constructorArgs());
         assertEquals(2, earth.constructorArgs().size());
@@ -319,7 +319,7 @@ public class EnumParserTests {
         assertNotNull(result.primaryConstructor());
         assertEquals(1, result.primaryConstructor().size());
 
-        var ok = result.cases().get(0);
+        var ok = result.cases().getFirst();
         assertNotNull(ok.constructorArgs());
         assertEquals(1, ok.constructorArgs().size());
         assertNotNull(ok.discriminant());
@@ -357,7 +357,7 @@ public class EnumParserTests {
 
         assertNotNull(result.primaryConstructor());
 
-        var a = result.cases().get(0);
+        var a = result.cases().getFirst();
         assertNotNull(a.constructorArgs());
         assertEquals(1, a.constructorArgs().size());
         assertInstanceOf(Expression.Binary.class, a.constructorArgs().getFirst());

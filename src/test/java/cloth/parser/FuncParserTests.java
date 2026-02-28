@@ -9,7 +9,6 @@ import cloth.lexer.SourceBuffer;
 import cloth.parser.flags.Visibility;
 import cloth.parser.statements.ClassParser;
 import cloth.parser.statements.EnumParser;
-import cloth.parser.statements.FuncParser;
 import cloth.parser.statements.StructParser;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -272,7 +271,7 @@ public class FuncParserTests {
 
         assertEquals(3, cls.methods().size());
 
-        var m1 = cls.methods().get(0);
+        var m1 = cls.methods().getFirst();
         assertTrue(m1.flags().isStatic());
         assertEquals(Visibility.Type.PUBLIC, m1.flags().getVisibility());
 

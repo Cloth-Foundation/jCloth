@@ -67,19 +67,6 @@ public class Parser extends ParserPart<Parser> {
 
         while (!isEndOfFile()) {
             Tokens.Keyword declarationKeyword = peekDeclarationKeyword();
-
-            /* if (declarationKeyword == Tokens.Keyword.Class) {
-                classes.add(new ClassParser(getLexer(), getFile()).parse());
-            } else if (declarationKeyword == Tokens.Keyword.Enum) {
-                enums.add(new EnumParser(getLexer(), getFile()).parse());
-            } else if (declarationKeyword == Tokens.Keyword.Struct) {
-                structs.add(new StructParser(getLexer(), getFile()).parse());
-            } else if (declarationKeyword == Tokens.Keyword.Interface) {
-                interfaces.add(new InterfaceParser(getLexer(), getFile()).parse());
-            } else {
-                break;
-            } */
-
             switch (declarationKeyword) {
                 case Tokens.Keyword.Class:
                     classes.add(new ClassParser(getLexer(), getFile()).parse());

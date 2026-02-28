@@ -692,7 +692,7 @@ public class ParserClassTests {
 
         assertEquals(2, result.fields().size());
 
-        var pi = result.fields().get(0);
+        var pi = result.fields().getFirst();
         assertEquals(Visibility.Type.PUBLIC, pi.flags().getVisibility());
         assertTrue(pi.flags().isStatic());
         assertTrue(pi.flags().isFinal());
