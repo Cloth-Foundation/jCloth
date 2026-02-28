@@ -10,7 +10,6 @@ Cloth is designed to combine the **clarity and structure of Java** with the **co
 ![GitHub Repo stars](https://img.shields.io/github/stars/Cloth-Foundation/jCloth?style=for-the-badge)
 ![GitHub forks](https://img.shields.io/github/forks/Cloth-Foundation/jCloth?style=for-the-badge)
 ![GitHub contributors](https://img.shields.io/github/contributors/Cloth-Foundation/jCloth?style=for-the-badge)
-![GitHub repo size](https://img.shields.io/github/repo-size/Cloth-Foundation/jCloth?style=for-the-badge)
 
 ---
 
@@ -130,16 +129,6 @@ Cloth aims to make it easy to build:
 - Embedded and robotics software
 - High-performance backend systems
 
-Cloth is **not focused on**:
-
-- Web application frameworks
-- Scripting environments
-- Rapid prototyping
-- Functional programming paradigms
-- Heavy metaprogramming
-
-It is a systems language first.
-
 ---
 
 ## Language Features
@@ -175,16 +164,6 @@ Cloth supports (or will support) the following features:
 ### Meta Programming
 - Meta keywords (`SIZEOF`, `TYPEOF`, `LENGTH`, `MAX`, `MIN`, etc.)
 - Compile-time introspection capabilities
-
----
-
-## Guiding Principle
-
-> **If a feature makes code easier to understand five years later, it belongs in Cloth.**
->
-> **If it only makes code shorter today, it probably does not.**
-
-New features are evaluated against whether they improve clarity of large systems, reduce ambiguity in behavior, and remain analyzable by tooling—not just whether they increase expressiveness.
 
 ---
 

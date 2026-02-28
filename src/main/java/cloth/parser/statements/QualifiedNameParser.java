@@ -28,17 +28,23 @@ import java.util.List;
  * with detailed information, including the location and nature of the issue.
  * <p>
  * <strong>Responsibilities:</strong>
- * <li>Parsing tokens into valid qualified names.</li>
- * <li>Validating and ensuring that each segment conforms to rules for identifiers or keywords.</li>
- * <li>Building a structured representation of a qualified name for use in further code analysis or compilation steps.</li>
+ * <ul>
+ *  <li>Parsing tokens into valid qualified names.</li>
+ *  <li>Validating and ensuring that each segment conforms to rules for identifiers or keywords.</li>
+ *  <li>Building a structured representation of a qualified name for use in further code analysis or compilation steps.</li>
+ * </ul>
  * <p>
  * <strong>Features:</strong>
- * <li>Delineates segments of a qualified name and associates them with their source span for error reporting or other analysis.</li>
- * <li>Supports hierarchical names in the format "segment1.segment2.segment3".</li>
+ * <ul>
+ *  <li>Delineates segments of a qualified name and associates them with their source span for error reporting or other analysis.</li>
+ *  <li>Supports hierarchical names in the format "segment1.segment2.segment3".</li>
+ * </ul>
  * <p>
  * <strong>General Structure:</strong>
- * <li>A {@code QualifiedNameParser} takes a {@link Lexer} instance and {@link SourceFile} as input, allowing it to analyze the corresponding token stream.</li>
- * <li>The parsing process results in a {@link QualifiedName} object, which contains the segments, source span, and separator.</li>
+ * <ul>
+ *  <li>A {@code QualifiedNameParser} takes a {@link Lexer} instance and {@link SourceFile} as input, allowing it to analyze the corresponding token stream.</li>
+ *  <li>The parsing process results in a {@link QualifiedName} object, which contains the segments, source span, and separator.</li>
+ * </ul>
  */
 public class QualifiedNameParser extends ParserPart<QualifiedNameParser.QualifiedName> {
 
