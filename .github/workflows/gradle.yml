@@ -34,11 +34,11 @@ jobs:
       uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
 
     - name: Test with Gradle Wrapper
-      run: ./gradle test
+      run: ./gradlew test
 
     - name: Test Summary Action
-  # You may pin to the exact commit or the version.
-  # uses: jeantessier/test-summary-action@1899972db6579bbc1678a74921a876e04c355180
+      # You may pin to the exact commit or the version.
+      # uses: jeantessier/test-summary-action@1899972db6579bbc1678a74921a876e04c355180
       uses: jeantessier/test-summary-action@v1.0.10
            
       
