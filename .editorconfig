@@ -1,0 +1,9 @@
+root = true
+
+[*.co]
+indent_style = tab
+indent_size = 4
+
+[*.cloth]
+indent_style = tab
+indent_size = 4

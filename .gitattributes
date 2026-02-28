@@ -1,12 +1,2 @@
 *.co linguist-language=SupportedLanguage linguist-vendored
 *.cloth linguist-language=SupportedLanguage linguist-vendored
-
-root = true
-
-[*.co]
-indent_style = tab
-indent_size = 4
-
-[*.cloth]
-indent_style = tab
-indent_size = 4
