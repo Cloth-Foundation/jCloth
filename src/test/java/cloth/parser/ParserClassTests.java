@@ -6,8 +6,10 @@ import cloth.file.SourceFile;
 import cloth.lexer.Lexer;
 import cloth.lexer.LexerOptions;
 import cloth.lexer.SourceBuffer;
+import cloth.parser.expressions.Expression;
 import cloth.parser.flags.Visibility;
 import cloth.parser.statements.ClassParser;
+import cloth.parser.statements.FieldParser;
 import cloth.parser.statements.ParameterListParser;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -188,8 +190,8 @@ public class ParserClassTests {
         assertEquals("name", params.getFirst().name().lexeme());
         assertEquals("string", params.getFirst().type().baseName().lexeme());
         assertNotNull(params.getFirst().defaultValue());
-        assertEquals(1, params.getFirst().defaultValue().size());
-        assertEquals("\"Unnamed\"", params.getFirst().defaultValue().getFirst().lexeme());
+        assertInstanceOf(Expression.Literal.class, params.getFirst().defaultValue());
+        assertEquals("\"Unnamed\"", ((Expression.Literal) params.getFirst().defaultValue()).value().lexeme());
     }
 
     @Test
@@ -198,8 +200,8 @@ public class ParserClassTests {
 
         assertEquals(1, params.size());
         assertNotNull(params.getFirst().defaultValue());
-        assertEquals(1, params.getFirst().defaultValue().size());
-        assertEquals("0", params.getFirst().defaultValue().getFirst().lexeme());
+        assertInstanceOf(Expression.Literal.class, params.getFirst().defaultValue());
+        assertEquals("0", ((Expression.Literal) params.getFirst().defaultValue()).value().lexeme());
     }
 
     @Test
@@ -209,7 +211,7 @@ public class ParserClassTests {
         assertEquals(1, params.size());
         assertTrue(params.getFirst().type().nullable());
         assertNotNull(params.getFirst().defaultValue());
-        assertEquals("null", params.getFirst().defaultValue().getFirst().lexeme());
+        assertEquals("null", ((Expression.Literal) params.getFirst().defaultValue()).value().lexeme());
     }
 
     @Test
@@ -223,7 +225,7 @@ public class ParserClassTests {
 
         assertNotNull(params.get(1).defaultValue());
         assertEquals("age", params.get(1).name().lexeme());
-        assertEquals("0", params.get(1).defaultValue().getFirst().lexeme());
+        assertEquals("0", ((Expression.Literal) params.get(1).defaultValue()).value().lexeme());
     }
 
     @Test
@@ -232,9 +234,9 @@ public class ParserClassTests {
 
         assertEquals(2, params.size());
         assertNotNull(params.get(0).defaultValue());
-        assertEquals("\"Unnamed\"", params.get(0).defaultValue().getFirst().lexeme());
+        assertEquals("\"Unnamed\"", ((Expression.Literal) params.get(0).defaultValue()).value().lexeme());
         assertNotNull(params.get(1).defaultValue());
-        assertEquals("0", params.get(1).defaultValue().getFirst().lexeme());
+        assertEquals("0", ((Expression.Literal) params.get(1).defaultValue()).value().lexeme());
     }
 
     @Test
@@ -256,10 +258,10 @@ public class ParserClassTests {
 
         assertEquals("Runnable", params.getFirst().type().baseName().lexeme());
         assertTrue(params.get(0).type().nullable());
-        assertEquals("null", params.get(0).defaultValue().getFirst().lexeme());
+        assertEquals("null", ((Expression.Literal) params.get(0).defaultValue()).value().lexeme());
 
         assertEquals("i32", params.get(1).type().baseName().lexeme());
-        assertEquals("3", params.get(1).defaultValue().getFirst().lexeme());
+        assertEquals("3", ((Expression.Literal) params.get(1).defaultValue()).value().lexeme());
     }
 
     @Test
@@ -423,7 +425,7 @@ public class ParserClassTests {
         assertEquals("Config", config.type().baseName().lexeme());
         assertTrue(config.type().nullable());
         assertNotNull(config.defaultValue());
-        assertEquals("null", config.defaultValue().getFirst().lexeme());
+        assertEquals("null", ((Expression.Literal) config.defaultValue()).value().lexeme());
     }
 
     // endregion
@@ -488,6 +490,223 @@ public class ParserClassTests {
     public void testFinalAbstractConflict() {
         var ex = assertThrows(CompileError.class, () -> parseClass("final abstract class Foo {}"));
         assertTrue(ex.getMessage().contains("'abstract' and 'final' cannot be combined"));
+    }
+
+    // endregion
+
+    // region Field Declarations (standalone)
+
+    private FieldParser.FieldDeclaration parseField(String source) throws IOException {
+        Path testFile = tempDir.resolve("test.co");
+        Files.writeString(testFile, source);
+
+        SourceFile sourceFile = new SourceFile(testFile.toString());
+        SourceBuffer buffer = new SourceBuffer(sourceFile, source);
+        DiagnosticSink diagnostics = new DiagnosticSink();
+        LexerOptions options = new LexerOptions();
+
+        Lexer lexer = new Lexer(buffer, diagnostics, options);
+        return new FieldParser(lexer, sourceFile).parse();
+    }
+
+    @Test
+    public void testSimpleVarField() throws IOException {
+        var result = parseField("var x: i32;");
+
+        assertEquals(FieldParser.BindingKind.VAR, result.binding());
+        assertEquals("x", result.name().lexeme());
+        assertEquals("i32", result.type().baseName().lexeme());
+        assertFalse(result.type().nullable());
+        assertEquals(0, result.type().arrayDepth());
+        assertNull(result.initializer());
+        assertFalse(result.flags().hasFlags());
+    }
+
+    @Test
+    public void testVarFieldWithInitializer() throws IOException {
+        var result = parseField("var x: i32 = 0;");
+
+        assertEquals(FieldParser.BindingKind.VAR, result.binding());
+        assertEquals("x", result.name().lexeme());
+        assertEquals("i32", result.type().baseName().lexeme());
+        assertNotNull(result.initializer());
+        assertInstanceOf(Expression.Literal.class, result.initializer());
+        assertEquals("0", ((Expression.Literal) result.initializer()).value().lexeme());
+    }
+
+    @Test
+    public void testLetFieldWithInitializer() throws IOException {
+        var result = parseField("let name: string = \"Cloth\";");
+
+        assertEquals(FieldParser.BindingKind.LET, result.binding());
+        assertEquals("name", result.name().lexeme());
+        assertEquals("string", result.type().baseName().lexeme());
+        assertNotNull(result.initializer());
+    }
+
+    @Test
+    public void testConstField() throws IOException {
+        var result = parseField("const LIMIT: i32 = 100;");
+
+        assertEquals(FieldParser.BindingKind.CONST, result.binding());
+        assertEquals("LIMIT", result.name().lexeme());
+        assertEquals("i32", result.type().baseName().lexeme());
+        assertNotNull(result.initializer());
+        assertEquals("100", ((Expression.Literal) result.initializer()).value().lexeme());
+    }
+
+    @Test
+    public void testFinalVarField() throws IOException {
+        var result = parseField("final var id: i64 = 123;");
+
+        assertEquals(FieldParser.BindingKind.VAR, result.binding());
+        assertEquals("id", result.name().lexeme());
+        assertEquals("i64", result.type().baseName().lexeme());
+        assertTrue(result.flags().isFinal());
+        assertNotNull(result.initializer());
+    }
+
+    @Test
+    public void testPublicStaticFinalVarField() throws IOException {
+        var result = parseField("public static final var PI: f32 = 3.14159;");
+
+        assertEquals(FieldParser.BindingKind.VAR, result.binding());
+        assertEquals("PI", result.name().lexeme());
+        assertEquals("f32", result.type().baseName().lexeme());
+        assertEquals(Visibility.Type.PUBLIC, result.flags().getVisibility());
+        assertTrue(result.flags().isStatic());
+        assertTrue(result.flags().isFinal());
+        assertNotNull(result.initializer());
+    }
+
+    @Test
+    public void testNullableTypeField() throws IOException {
+        var result = parseField("var user: User?;");
+
+        assertEquals("User", result.type().baseName().lexeme());
+        assertTrue(result.type().nullable());
+    }
+
+    @Test
+    public void testArrayTypeField() throws IOException {
+        var result = parseField("var items: string[];");
+
+        assertEquals("string", result.type().baseName().lexeme());
+        assertEquals(1, result.type().arrayDepth());
+    }
+
+    @Test
+    public void testNullableArrayField() throws IOException {
+        var result = parseField("var data: i32?[];");
+
+        assertEquals("i32", result.type().baseName().lexeme());
+        assertTrue(result.type().nullable());
+        assertEquals(1, result.type().arrayDepth());
+    }
+
+    @Test
+    public void testMultiDimensionalArrayField() throws IOException {
+        var result = parseField("var matrix: f64[][];");
+
+        assertEquals("f64", result.type().baseName().lexeme());
+        assertEquals(2, result.type().arrayDepth());
+    }
+
+    @Test
+    public void testFieldWithComplexInitializer() throws IOException {
+        var result = parseField("var x: i32 = 2 * 3 + 1;");
+
+        assertNotNull(result.initializer());
+        assertInstanceOf(Expression.Binary.class, result.initializer());
+    }
+
+    @Test
+    public void testFieldReturnsNullWhenNotField() throws IOException {
+        var result = parseField("class Foo {}");
+        assertNull(result);
+    }
+
+    @Test
+    public void testFieldWithModifiersButNoBinding() {
+        var ex = assertThrows(CompileError.class, () -> parseField("public 42;"));
+        assertTrue(ex.getMessage().contains("Expected a declaration after modifiers"));
+    }
+
+    @Test
+    public void testPrivateVarField() throws IOException {
+        var result = parseField("private var secret: string = \"hidden\";");
+
+        assertEquals(Visibility.Type.PRIVATE, result.flags().getVisibility());
+        assertEquals("secret", result.name().lexeme());
+    }
+
+    @Test
+    public void testInternalLetField() throws IOException {
+        var result = parseField("internal let config: string = \"default\";");
+
+        assertEquals(Visibility.Type.INTERNAL, result.flags().getVisibility());
+        assertEquals(FieldParser.BindingKind.LET, result.binding());
+    }
+
+    // endregion
+
+    // region Fields Inside Class Body
+
+    @Test
+    public void testClassWithSingleField() throws IOException {
+        var result = parseClass("class Foo { var x: i32 = 0; }");
+
+        assertEquals("Foo", result.name().lexeme());
+        assertEquals(1, result.fields().size());
+
+        var field = result.fields().getFirst();
+        assertEquals("x", field.name().lexeme());
+        assertEquals("i32", field.type().baseName().lexeme());
+        assertNotNull(field.initializer());
+    }
+
+    @Test
+    public void testClassWithMultipleFields() throws IOException {
+        var result = parseClass("class Point { var x: f64 = 0.0; var y: f64 = 0.0; }");
+
+        assertEquals(2, result.fields().size());
+        assertEquals("x", result.fields().get(0).name().lexeme());
+        assertEquals("y", result.fields().get(1).name().lexeme());
+    }
+
+    @Test
+    public void testClassWithMixedFieldBindings() throws IOException {
+        var result = parseClass(
+            "class Config { let name: string = \"app\"; var count: i32 = 0; const LIMIT: i32 = 100; }");
+
+        assertEquals(3, result.fields().size());
+        assertEquals(FieldParser.BindingKind.LET, result.fields().get(0).binding());
+        assertEquals(FieldParser.BindingKind.VAR, result.fields().get(1).binding());
+        assertEquals(FieldParser.BindingKind.CONST, result.fields().get(2).binding());
+    }
+
+    @Test
+    public void testClassWithModifiedFields() throws IOException {
+        var result = parseClass(
+            "class Math { public static final var PI: f64 = 3.14; private var count: i32 = 0; }");
+
+        assertEquals(2, result.fields().size());
+
+        var pi = result.fields().get(0);
+        assertEquals(Visibility.Type.PUBLIC, pi.flags().getVisibility());
+        assertTrue(pi.flags().isStatic());
+        assertTrue(pi.flags().isFinal());
+        assertEquals("PI", pi.name().lexeme());
+
+        var count = result.fields().get(1);
+        assertEquals(Visibility.Type.PRIVATE, count.flags().getVisibility());
+        assertEquals("count", count.name().lexeme());
+    }
+
+    @Test
+    public void testEmptyClassStillHasNoFields() throws IOException {
+        var result = parseClass("class Empty {}");
+        assertTrue(result.fields().isEmpty());
     }
 
     // endregion

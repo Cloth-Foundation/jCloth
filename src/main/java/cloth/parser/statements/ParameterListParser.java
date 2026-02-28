@@ -4,6 +4,8 @@ import cloth.error.errors.CompileError;
 import cloth.file.SourceFile;
 import cloth.lexer.Lexer;
 import cloth.parser.ParserPart;
+import cloth.parser.expressions.Expression;
+import cloth.parser.expressions.ExpressionParser;
 import cloth.token.IToken;
 import cloth.token.TokenKind;
 import cloth.token.Tokens;
@@ -64,17 +66,18 @@ public class ParameterListParser extends ParserPart<List<ParameterListParser.Par
                 "Expected ':' between parameter name and type.",
                 "name: Type"));
 
-        TypeReference type = parseTypeReference();
+        TypeReferenceParser.TypeReference type = parseTypeReference();
 
-        List<IToken> defaultValue = null;
+        Expression defaultValue = null;
         if (is(Tokens.Operator.Assign)) {
-            defaultValue = parseDefaultValue();
+            advance(); // consume =
+            defaultValue = new ExpressionParser(getLexer(), getFile()).parse();
         }
 
         SourceSpan span = new SourceSpan(
             name.span().start(),
-            defaultValue != null && !defaultValue.isEmpty()
-                ? defaultValue.getLast().span().end()
+            defaultValue != null
+                ? defaultValue.span().end()
                 : type.span().end()
         );
 
@@ -85,76 +88,8 @@ public class ParameterListParser extends ParserPart<List<ParameterListParser.Par
 
     // region Type Reference
 
-    @SneakyThrows
-    private TypeReference parseTypeReference() {
-        IToken baseName;
-        if (is(TokenKind.Identifier) || is(TokenKind.Keyword)) {
-            baseName = advance();
-        } else {
-            throw new CompileError("Expected type", peek().span(),
-                "Expected a type name.",
-                "name: Type");
-        }
-
-        boolean nullable = false;
-        int arrayDepth = 0;
-        IToken lastToken = baseName;
-
-        while (true) {
-            if (is(Tokens.Operator.Question)) {
-                nullable = true;
-                lastToken = advance();
-            } else if (is(Tokens.Operator.LeftBracket)) {
-                advance();
-                lastToken = expect(Tokens.Operator.RightBracket, () ->
-                    new CompileError("Expected ']'", peek().span(),
-                        "Expected closing bracket for array type.",
-                        "Type[]"));
-                arrayDepth++;
-            } else {
-                break;
-            }
-        }
-
-        SourceSpan span = new SourceSpan(baseName.span().start(), lastToken.span().end());
-        return new TypeReference(baseName, nullable, arrayDepth, span);
-    }
-
-    // endregion
-
-    // region Default Value
-
-    /**
-     * Consumes tokens for a default value expression after {@code =}.
-     * Collects raw tokens until an unbalanced {@code ,} or {@code )} is reached,
-     * respecting nested parentheses, brackets, and braces.
-     */
-    private List<IToken> parseDefaultValue() {
-        advance(); // consume =
-
-        var tokens = new ArrayList<IToken>();
-        int parenDepth = 0;
-        int bracketDepth = 0;
-        int braceDepth = 0;
-
-        while (!isEndOfFile()) {
-            if (parenDepth == 0 && bracketDepth == 0 && braceDepth == 0) {
-                if (is(Tokens.Operator.Comma) || is(Tokens.Operator.RightParen)) {
-                    break;
-                }
-            }
-
-            if (is(Tokens.Operator.LeftParen)) parenDepth++;
-            else if (is(Tokens.Operator.RightParen)) parenDepth--;
-            else if (is(Tokens.Operator.LeftBracket)) bracketDepth++;
-            else if (is(Tokens.Operator.RightBracket)) bracketDepth--;
-            else if (is(Tokens.Operator.LeftBrace)) braceDepth++;
-            else if (is(Tokens.Operator.RightBrace)) braceDepth--;
-
-            tokens.add(advance());
-        }
-
-        return tokens;
+    private TypeReferenceParser.TypeReference parseTypeReference() {
+        return new TypeReferenceParser(getLexer(), getFile()).parse();
     }
 
     // endregion
@@ -163,15 +98,8 @@ public class ParameterListParser extends ParserPart<List<ParameterListParser.Par
 
     public record Parameter(
         IToken name,
-        TypeReference type,
-        @Nullable List<IToken> defaultValue,
-        SourceSpan span
-    ) {}
-
-    public record TypeReference(
-        IToken baseName,
-        boolean nullable,
-        int arrayDepth,
+        TypeReferenceParser.TypeReference type,
+        @Nullable Expression defaultValue,
         SourceSpan span
     ) {}
 

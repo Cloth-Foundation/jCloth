@@ -205,4 +205,25 @@ public abstract class ParserPart<T> implements Parsable<T> {
         }
     }
 
+    /**
+     * Peeks ahead past any modifier keywords to find the actual declaration keyword
+     * (e.g. {@code class}, {@code func}, {@code var}). Does not consume any tokens.
+     */
+    public Tokens.Keyword peekDeclarationKeyword() {
+        int offset = 0;
+        while (true) {
+            var token = peek(offset);
+            if (token.is(TokenKind.Keyword) && ((cloth.token.Token) token).keyword().isStorageModifier()) {
+                offset++;
+            } else if (token.is(TokenKind.Keyword) && ((cloth.token.Token) token).keyword().isModifier()) {
+                offset++;
+            } else {
+                if (token.is(TokenKind.Keyword)) {
+                    return ((cloth.token.Token) token).keyword();
+                }
+                return Tokens.Keyword.None;
+            }
+        }
+    }
+
 }

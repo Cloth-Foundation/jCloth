@@ -56,8 +56,9 @@ public class ClassParser extends ParserPart<ClassParser.ClassDeclaration> {
                 "Expected opening brace for class body.",
                 "class MyClass { }"));
 
-        // TODO: parse class members once member parsers exist
-        skipBlockContents();
+        var fields = new ArrayList<FieldParser.FieldDeclaration>();
+        var methods = new ArrayList<FuncParser.FuncDeclaration>();
+        parseClassBody(fields, methods);
 
         IToken closeBrace = expect(Tokens.Operator.RightBrace, () ->
             new CompileError("Expected '}'", peek().span(),
@@ -70,7 +71,7 @@ public class ClassParser extends ParserPart<ClassParser.ClassDeclaration> {
             closeBrace.span().end()
         );
 
-        return new ClassDeclaration(flags, name, primaryParams, baseClass, interfaces, span);
+        return new ClassDeclaration(flags, name, primaryParams, baseClass, interfaces, fields, methods, span);
     }
 
     // region Base Class & Interfaces
@@ -103,25 +104,46 @@ public class ClassParser extends ParserPart<ClassParser.ClassDeclaration> {
 
     // endregion
 
-    /**
-     * Consumes tokens inside a brace-delimited block, handling nested braces.
-     * Stops when the matching closing brace is reached (leaving it for expect to consume).
-     */
-    private void skipBlockContents() {
-        int depth = 0;
-        while (!isEndOfFile()) {
-            if (is(Tokens.Operator.LeftBrace)) {
-                depth++;
-                advance();
-            } else if (is(Tokens.Operator.RightBrace)) {
-                if (depth == 0) break;
-                depth--;
-                advance();
+    // region Class Body
+
+    private void parseClassBody(List<FieldParser.FieldDeclaration> fields,
+                                List<FuncParser.FuncDeclaration> methods) {
+        while (!is(Tokens.Operator.RightBrace) && !isEndOfFile()) {
+            Tokens.Keyword memberKeyword = peekDeclarationKeyword();
+
+            if (memberKeyword == Tokens.Keyword.Var
+                || memberKeyword == Tokens.Keyword.Let
+                || memberKeyword == Tokens.Keyword.Const) {
+                fields.add(new FieldParser(getLexer(), getFile()).parse());
+            } else if (memberKeyword == Tokens.Keyword.Func) {
+                methods.add(new FuncParser(getLexer(), getFile()).parse());
             } else {
-                advance();
+                skipUnknownMember();
             }
         }
     }
+
+    /**
+     * Skips a single unrecognized member in the class body.
+     * If the current token opens a brace block, skips the entire block;
+     * otherwise advances past one token.
+     */
+    private void skipUnknownMember() {
+        if (is(Tokens.Operator.LeftBrace)) {
+            advance();
+            int depth = 1;
+            while (depth > 0 && !isEndOfFile()) {
+                if (is(Tokens.Operator.LeftBrace)) depth++;
+                else if (is(Tokens.Operator.RightBrace)) depth--;
+                if (depth > 0) advance();
+            }
+            if (!isEndOfFile()) advance();
+        } else {
+            advance();
+        }
+    }
+
+    // endregion
 
     // region Records
 
@@ -131,6 +153,8 @@ public class ClassParser extends ParserPart<ClassParser.ClassDeclaration> {
         @Nullable List<ParameterListParser.Parameter> primaryConstructor,
         @Nullable QualifiedNameParser.QualifiedName baseClass,
         List<QualifiedNameParser.QualifiedName> interfaces,
+        List<FieldParser.FieldDeclaration> fields,
+        List<FuncParser.FuncDeclaration> methods,
         SourceSpan span
     ) {}
 

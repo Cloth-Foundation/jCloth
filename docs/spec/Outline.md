@@ -1071,15 +1071,25 @@ Cloth enums have the following properties:
 
 #### 5.5.1 Declaration form
 
-An enum declaration has the form:
+An enum declaration has one of two forms:
+
+**Simple form** (no primary constructor):
 
 ```cloth
 [visibility] enum <Name> { <cases> <members>? }
 ```
 
+**Constructor form** (primary constructor):
+
+```cloth
+[visibility] enum <Name>(<params>) { <cases> <members>? }
+```
+
+When a primary constructor is present, each enum case MUST provide positional arguments matching the constructor parameters. This is the primary mechanism for attaching shared data to every case.
+
 Cases appear first in the enum body, followed by optional members (methods and static members).
 
-Example:
+Examples:
 
 ```cloth
 public enum Color {
@@ -1093,13 +1103,29 @@ public enum Color {
 }
 ```
 
+```cloth
+public enum Color(hex: string) {
+    Red("#FF0000"),
+    Green("#00FF00"),
+    Blue("#0000FF");
+}
+```
+
+```cloth
+enum Planet(mass: f64, radius: f64) {
+    Mercury(3.303e+23, 2.4397e6),
+    Venus(4.869e+24, 6.0518e6),
+    Earth(5.976e+24, 6.37814e6);
+}
+```
+
 The semicolon after the case list is REQUIRED if and only if additional members follow.
 
 #### 5.5.2 Case declarations
 
 Each enum case declares a distinct value.
 
-Case forms:
+**When the enum has no primary constructor**, the following case forms are available:
 
 1. **Unit case** (no payload):
 
@@ -1125,12 +1151,27 @@ These forms MAY be combined:
 Http(code: i32, message: string) = 500
 ```
 
+**When the enum has a primary constructor**, each case MUST provide constructor arguments:
+
+```cloth
+CaseName(<args>)
+```
+
+Constructor arguments are positional expressions that correspond to the primary constructor parameters in order. An explicit discriminant MAY follow:
+
+```cloth
+CaseName(<args>) = <discriminant>
+```
+
 Rules:
 
 * Case names MUST be unique within the enum.
+* If the enum has a primary constructor, each case MUST provide exactly the arguments required by the constructor (arity and types). A case MUST NOT use `name: Type` payload syntax.
+* If the enum does not have a primary constructor, a case MAY declare a data payload using `name: Type` parameter syntax.
 * Payload parameter names MUST be unique within the case.
 * Payload parameter declarations use the same `name: Type` form as methods.
 * If a case declares a payload, that payload is part of the enum value and participates in equality (see 5.5.6).
+* Constructor arguments participate in equality in the same way as payloads.
 
 #### 5.5.3 Discriminants and numeric representation
 
@@ -1248,21 +1289,22 @@ Compilation MUST fail for any of the following:
 
 ### 5.6 Struct Declarations
 
-Structs define **value types**.
+Structs define **small, data-centric value types**.
 
-Structs are designed for:
+Structs are the preferred choice when a type:
 
-* predictable layout
-* no hidden allocations
-* efficient copying
-* use in low-level systems contexts
+* represents a small, self-contained piece of data (e.g. a 2D point, a color, an RGBA pixel)
+* benefits from predictable memory layout and efficient copying
+* does not require identity, inheritance, or polymorphism
+
+Classes, by contrast, are for complex object-oriented designs that need reference semantics, inheritance hierarchies, and interface polymorphism.
 
 #### 5.6.1 Declaration form
 
 A struct declaration has the form:
 
 ```cloth
-[visibility] struct <Name>(<primary_params>?) { <members> }
+[visibility] [final]? struct <Name>(<primary_params>?) { <members> }
 ```
 
 Structs MAY declare a primary parameter list in the header, using the same syntax as classes.
@@ -1273,12 +1315,16 @@ Each struct primary parameter MUST create an implicit instance field with the sa
 * Mutability: immutable (equivalent to `final var`)
 * Type: the declared parameter type
 
-Example:
+Examples:
 
 ```cloth
-struct Vec2(x: f32, y: f32) {
-    func lengthSquared(): f32 {
-        return this.x * this.x + this.y * this.y;
+struct Vec2(x: f32, y: f32) {}
+
+struct Color(r: u8, g: u8, b: u8, a: u8) {}
+
+public struct Rect(x: f32, y: f32, w: f32, h: f32) {
+    func area(): f32 {
+        return this.w * this.h;
     }
 }
 ```
@@ -1287,7 +1333,7 @@ struct Vec2(x: f32, y: f32) {
 
 Struct values have **value semantics**:
 
-* Assignment copies the value.
+* Assignment copies the value. Mutating a copy does not affect the original.
 * Passing a struct as a parameter passes the value (copy) unless the parameter type uses an explicit reference qualifier (e.g., `ref`), if/when those are fully specified.
 
 The exact ABI details of copying (bitwise vs field-wise) are implementation-defined, but behavior MUST be observationally equivalent to copying all fields.
@@ -1318,6 +1364,8 @@ Structs MAY declare:
 
 Struct methods follow the same declaration rules as class methods.
 
+Mutable fields (`var`) are permitted. Mutating a field on a struct value mutates that particular copy; value semantics ensure the original is unaffected.
+
 #### 5.6.5 Equality
 
 Struct equality is value-based by default:
@@ -1328,10 +1376,22 @@ Struct equality is value-based by default:
 
 #### 5.6.6 Restrictions and required errors
 
+Structs are intentionally restricted to keep them lightweight and predictable.
+
 Compilation MUST fail for any of the following:
 
 * `new S(...)` where `S` is a struct.
 * A struct attempting to inherit from a base class.
+* A struct attempting to be used as a base class (structs MUST NOT be extended).
+* A struct using the `is` keyword to implement interfaces. Structs are not polymorphic.
+* A struct declared with the `abstract` modifier.
+* A struct declared with the `override` modifier.
+* A struct member declared with `abstract` or `override`.
+* A struct body containing a nested type declaration (`class`, `enum`, `interface`, or `struct`).
+
+#### 5.6.7 Size advisory
+
+Structs are intended for small types. Implementations SHOULD warn when a struct exceeds a recommended size threshold (e.g. 64 bytes). Large aggregates are better modeled as classes, which use reference semantics and avoid expensive copies.
 
 ---
 
@@ -1367,13 +1427,12 @@ Interface method declarations:
 
 #### 5.7.2 Implementing interfaces
 
-Classes and structs MAY implement one or more interfaces using the `is` keyword.
+Classes MAY implement one or more interfaces using the `is` keyword.
 
 Implementation clause syntax (v1):
 
 ```cloth
 class C(): Base(...) is I1, I2 { ... }
-struct S(...) is I1, I2 { ... }
 ```
 
 The `is` keyword introduces the interface implementation list, which is separate from the base class inheritance clause (`:` with constructor arguments).
@@ -1384,6 +1443,7 @@ Rules:
 * Interface implementation uses `is` followed by a comma-separated list of interface type names.
 * The `is` clause MUST appear after the base class clause (if present) and before the class body.
 * A type MUST NOT list the same interface more than once.
+* Structs MUST NOT implement interfaces (see 5.6.6).
 
 #### 5.7.3 Conformance requirements
 

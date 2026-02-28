@@ -1,10 +1,11 @@
 module cloth.math;
+module cloth.math;
 
 import std.io;
 
 /**
-  * A class containing mathematical constants and functions.
-  */
+ * A class containing mathematical constants and functions.
+ */
 public final class Math()  {
 
     public static {
@@ -55,6 +56,12 @@ public final class Math()  {
             }
             return 0;
         }
+    }
+
+    public static enum {
+        RED,
+        GREEN,
+        BLUE;
     }
 
 }
