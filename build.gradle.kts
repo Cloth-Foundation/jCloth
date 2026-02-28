@@ -18,6 +18,8 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok:1.18.42")
     implementation("org.jetbrains:annotations:26.1.0")
     runtimeOnly("org.jetbrains:annotations:26.1.0")
+
+    implementation("org.hjson:hjson:3.1.0")
 }
 
 tasks.test {

@@ -1,0 +1,25 @@
+# This is a sample configuration file for a Cloth project. It defines the project's name, version, entry point, dependencies, and build settings.
+# This is for testing purposes only and may or may not reflect actual project configurations.
+# The .hjson format is not solidified as the build language. We have also tested .json, .yaml, .toml, and .k config formats. The final format may be different from this example.
+{
+    name: "Test Cloth Project"
+    version: "1.0.0"
+
+    entry: {
+        main: "main.Main"
+    }
+
+    dependencies: {
+        "cloth.std": "1.0.0"
+        "cloth.test": "1.0.0"
+    }
+
+    build {
+        target: "x86_64"
+        optimize: 2
+        debug: true
+        buildFlags: {[
+            "jb"
+        ]}
+    }
+}
