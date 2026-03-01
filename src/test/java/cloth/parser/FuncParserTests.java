@@ -75,7 +75,7 @@ public class FuncParserTests {
         assertTrue(method.parameters().isEmpty());
         assertEquals("void", method.returnType().baseName().lexeme());
         assertNotNull(method.body());
-        assertTrue(method.body().isEmpty());
+        assertTrue(method.body().statements().isEmpty());
     }
 
     @Test
@@ -86,7 +86,7 @@ public class FuncParserTests {
         assertEquals("compute", method.name().lexeme());
         assertEquals("i32", method.returnType().baseName().lexeme());
         assertNotNull(method.body());
-        assertFalse(method.body().isEmpty());
+        assertFalse(method.body().statements().isEmpty());
     }
 
     @Test
@@ -316,7 +316,7 @@ public class FuncParserTests {
 
         assertEquals(1, cls.methods().size());
         assertNotNull(cls.methods().getFirst().body());
-        assertFalse(cls.methods().getFirst().body().isEmpty());
+        assertFalse(cls.methods().getFirst().body().statements().isEmpty());
     }
 
     @Test

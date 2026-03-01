@@ -26,7 +26,7 @@ import java.util.List;
  *    80  infix:   * / %         (left)
  *    70  infix:   + -           (left)
  *    60  infix:   as            (left, rhs is type)
- *    50  infix:   &lt; &lt;= &gt; &gt;=   (left)
+ *    50  infix:   &lt; &lt;= &gt; &gt;=     (left)
  *    40  infix:   == !=         (left)
  *    30  infix:   and           (left)
  *    20  infix:   or            (left)
@@ -240,13 +240,8 @@ public class ExpressionParser extends ParserPart<Expression> {
         IToken op = advance();
         int rightBP = leftBP + 1; // left-associative
         Expression right = parseExpression(rightBP);
-        return new Expression.Binary(left, op, right,
-            new SourceSpan(left.span().start(), right.span().end()));
+        return new Expression.Binary(left, op, right, new SourceSpan(left.span().start(), right.span().end()));
     }
-
-    // endregion
-
-    // region Argument list
 
     /**
      * Parses a parenthesized, comma-separated list of expression arguments.
@@ -261,10 +256,9 @@ public class ExpressionParser extends ParserPart<Expression> {
 
         var args = new ArrayList<Expression>();
         if (!is(Tokens.Operator.RightParen)) {
-            args.add(parseExpression(0));
-            while (match(Tokens.Operator.Comma)) {
+            do {
                 args.add(parseExpression(0));
-            }
+            } while (match(Tokens.Operator.Comma));
         }
 
         expect(Tokens.Operator.RightParen, () ->
@@ -275,5 +269,4 @@ public class ExpressionParser extends ParserPart<Expression> {
         return args;
     }
 
-    // endregion
 }

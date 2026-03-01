@@ -12,7 +12,6 @@ import cloth.token.span.SourceSpan;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -20,7 +19,7 @@ import java.util.List;
  * <pre>[modifiers] func name(params): ReturnType { body }</pre>
  * Abstract methods omit the body and terminate with a semicolon:
  * <pre>abstract func name(params): ReturnType;</pre>
- * The body is captured as raw tokens; full statement/expression parsing is deferred.
+ * The body is parsed into a {@link Statement.Block} via {@link StatementParser}.
  */
 public class FuncParser extends ParserPart<FuncParser.FuncDeclaration> {
 
@@ -54,7 +53,7 @@ public class FuncParser extends ParserPart<FuncParser.FuncDeclaration> {
         TypeReferenceParser.TypeReference returnType =
             new TypeReferenceParser(getLexer(), getFile()).parse();
 
-        List<IToken> body = null;
+        Statement.Block body = null;
         IToken last;
 
         if (flags.isAbstract()) {
@@ -82,7 +81,7 @@ public class FuncParser extends ParserPart<FuncParser.FuncDeclaration> {
                     "Expected opening brace for function body.",
                     "func add(a: i32, b: i32): i32 { return a + b; }"));
 
-            body = parseBody();
+            body = new StatementParser(getLexer(), getFile()).parseBlock();
 
             last = expect(Tokens.Operator.RightBrace, () ->
                 new CompileError("Expected '}'", peek().span(),
@@ -99,31 +98,6 @@ public class FuncParser extends ParserPart<FuncParser.FuncDeclaration> {
         return new FuncDeclaration(flags, name, parameters, returnType, body, span);
     }
 
-    // region Body
-
-    /**
-     * Collects raw tokens inside a brace-delimited block, respecting nested
-     * brace pairs. The opening {@code &#123;} must already be consumed; the
-     * closing {@code &#125;} is left unconsumed for the caller to expect.
-     */
-    private List<IToken> parseBody() {
-        var tokens = new ArrayList<IToken>();
-        int depth = 1;
-
-        while (depth > 0 && !isEndOfFile()) {
-            if (is(Tokens.Operator.LeftBrace)) depth++;
-            else if (is(Tokens.Operator.RightBrace)) depth--;
-
-            if (depth > 0) {
-                tokens.add(advance());
-            }
-        }
-
-        return tokens;
-    }
-
-    // endregion
-
     // region Records
 
     public record FuncDeclaration(
@@ -131,7 +105,7 @@ public class FuncParser extends ParserPart<FuncParser.FuncDeclaration> {
         IToken name,
         List<ParameterListParser.Parameter> parameters,
         TypeReferenceParser.TypeReference returnType,
-        @Nullable List<IToken> body,
+        @Nullable Statement.Block body,
         SourceSpan span
     ) {}
 

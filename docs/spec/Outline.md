@@ -2633,25 +2633,96 @@ while running {
 
 ---
 
-### 8.10 `for` Statement (TBD)
+### 8.10 `for` Statement
 
-Cloth may support a structured `for` loop.
-Exact syntax is TBD.
+Cloth supports two `for` loop forms:
 
-Possible forms include:
+* a C-style counted/conditional loop, and
+* a foreach loop over an array.
 
-* parenthesized form: `for (init; cond; step) { ... }`
-* range form: `for x in range(...) { ... }`
+#### 8.10.1 C-style `for` loop
 
-This section is reserved until the loop model is finalized.
+Form:
 
-If a `for` statement is introduced, it MUST preserve the deterministic evaluation and scoping rules defined in this chapter.
+```cloth
+for ( <init>? ; <condition>? ; <step>? ) <block>
+```
+
+Where:
+
+* `<init>` is either a variable declaration (without a trailing `;`) or an assignment header (a `<target> = <expr>` form without a trailing `;`).
+* `<condition>` is an expression.
+* `<step>` is an assignment header (a `<target> = <expr>` form without a trailing `;`).
+
+Rules:
+
+* The `for` loop introduces a scope that includes the `<init>`, `<condition>`, `<step>`, and the loop body.
+* If an `<init>` is present, it is executed exactly once, before the first evaluation of the condition.
+* If a `<condition>` is present, it MUST have type `bool`.
+  * If `<condition>` is omitted, the loop condition is treated as `true`.
+* The `<condition>` is evaluated before each iteration.
+* If the condition evaluates to `false`, the loop terminates.
+* The loop body is executed only when the condition evaluates to `true`.
+* After the loop body completes normally, if a `<step>` is present, it is executed exactly once, and then the next iteration begins.
+
+Evaluation order:
+
+* The evaluation order of subexpressions inside `<init>`, `<condition>`, and `<step>` follows the normal left-to-right expression evaluation rules.
+* The loop executes in the following order: `<init>` (once) then repeating: `<condition>`, body, `<step>`.
+
+Examples:
+
+```cloth
+for (var i: i32 = 0; i < 10; i = i + 1) {
+    println(i);
+}
+```
+
+#### 8.10.2 Foreach `for` loop over arrays
+
+Form:
+
+```cloth
+for ( <name> in <arrayExpr> ) <block>
+```
+
+Rules:
+
+* `<arrayExpr>` MUST be an expression whose type is an array type `T[]`.
+* `<name>` introduces a new local binding that is visible only within the loop body.
+* The type of `<name>` is `T`.
+* The `<arrayExpr>` is evaluated exactly once before iteration begins.
+* Iteration proceeds in increasing index order from the first element to the last element.
+
+Binding:
+
+* The iteration variable is treated as an implicit `let` binding for the duration of each iteration.
+
+Example:
+
+```cloth
+for (x in myArray) {
+    println(x);
+}
+```
+
+Notes:
+
+* The exact mutability of the iteration variable is specified by the variable-binding rules. If no explicit binding keyword is present in the loop form, the iteration variable is treated as immutable for the duration of each iteration.
+
+Required errors:
+
+* A `for` loop header that does not match one of the forms above.
+* A C-style `<condition>` expression that is not of type `bool`.
+* A C-style `<init>` or `<step>` form that is not one of the permitted header forms.
+* A foreach loop where `<arrayExpr>` is not an array type.
+* Declaring an iteration variable name that is not a valid identifier or that is a reserved word.
 
 ---
 
-### 8.11 `break` and `continue` (TBD)
+### 8.11 `break` and `continue`
 
-If included, `break` and `continue` MUST only be valid within loop bodies.
+`break` and `continue` are control-flow statements that alter execution of the nearest enclosing loop.
 
 Forms:
 
@@ -2660,28 +2731,83 @@ break;
 continue;
 ```
 
-If included:
+Rules:
 
-* `break` MUST exit the innermost enclosing loop.
-* `continue` MUST skip to the next iteration of the innermost enclosing loop.
-* Using `break` or `continue` outside a loop MUST be a compile-time error.
+* `break;` MUST immediately exit the innermost enclosing loop.
+* `continue;` MUST immediately skip the remainder of the current loop body and begin the next iteration of the innermost enclosing loop.
+* The "innermost enclosing loop" is the loop statement (`while` or `for`) whose body directly contains the `break` or `continue` statement, after accounting for nested blocks.
+
+Loop-specific behavior:
+
+* In a `while` loop, `continue;` transfers control to re-evaluating the `while` condition.
+* In a C-style `for (init; condition; step) { ... }` loop, `continue;` transfers control to executing the `step` (if present) and then re-evaluating the `condition`.
+* In a foreach `for (x in arrayExpr) { ... }` loop, `continue;` transfers control to the next element iteration.
+
+Required errors:
+
+* Using `break` outside of any loop body.
+* Using `continue` outside of any loop body.
+
+Examples:
+
+```cloth
+while running {
+    if shouldStop { break; }
+    if shouldSkip { continue; }
+    tick();
+}
+```
 
 ---
 
-### 8.12 `defer` (TBD)
+### 8.12 `defer`
 
-Cloth may include `defer` to simplify explicit resource cleanup in manual memory mode.
+`defer` schedules an action to run when control leaves the current lexical scope.
 
-Example:
+`defer` exists to make scope-based cleanup explicit and reliable, especially in manual memory mode.
+
+Form:
+
+```cloth
+defer <callExpr>;
+```
+
+Rules:
+
+* A `defer` statement MUST appear within a block.
+* The deferred action MUST be a call expression.
+* A `defer` statement registers one deferred action associated with the innermost enclosing block scope.
+* The arguments and receiver of the deferred call MUST be evaluated at the point the `defer` statement executes.
+  * The actual call MUST occur later, when the scope is exited.
+* Deferred actions for a given scope MUST execute in reverse order of registration (LIFO).
+* Each deferred action MUST run exactly once when control leaves its associated scope, including leaving the scope due to:
+  * normal fallthrough at the end of the block,
+  * `return`,
+  * `break`,
+  * `continue`.
+
+Notes:
+
+* If the program terminates abnormally (for example, due to a runtime trap), deferred actions are not guaranteed to run.
+
+Required errors:
+
+* A `defer` statement appearing outside of a block.
+* A `defer` statement whose operand is not a call expression.
+
+Examples:
 
 ```cloth
 var f = File.open("a.txt");
 defer f.close();
 ```
 
-This section is reserved until resource management semantics are finalized.
-
-If included, `defer` MUST guarantee that the deferred action runs exactly once when control leaves the current scope, regardless of which statement transfers control (return, break, continue, etc.).
+```cloth
+lock(m);
+defer unlock(m);
+defer log("leaving scope");
+work();
+```
 
 ---
 

@@ -1,0 +1,31 @@
+project:
+  name: Test Config Files
+  description: A test project for YAML configuration files.
+  version: 1.0.0
+  authors:
+    - name: John Doe
+      email: john.doe@example.com
+
+entry:
+  main: src/main.Main.co
+  test: src/test.Test.co
+
+dependencies:
+  - name: LibraryA
+    version: 2.3.4
+    repository: https://example.com/repo
+
+  - name: LibraryB
+    version: 1.0.0
+    repository: https://example.com/repo
+
+build:
+  output: dist/
+  target: "x86_64-unknown-linux-gnu"
+  type: release
+  options:
+    optimize: true
+    debug: false
+    
+  build_flags:
+    - "jb"
