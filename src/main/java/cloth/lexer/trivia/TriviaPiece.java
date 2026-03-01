@@ -12,6 +12,9 @@ import cloth.token.span.SourceSpan;
  * @param kind The kind of the trivia, indicating its type (e.g., whitespace, comment).
  * @param span The span in the source file where the trivia occurs.
  * @param text The textual representation of the trivia as it appears in the source file.
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public record TriviaPiece(TokenKind kind, SourceSpan span, String text) {
 

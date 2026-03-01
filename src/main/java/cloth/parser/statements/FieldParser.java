@@ -20,6 +20,9 @@ import org.jetbrains.annotations.Nullable;
  * Where {@code binding} is one of {@code var}, {@code let}, or {@code const}.
  * Returns {@code null} if the current token is not a binding keyword,
  * allowing callers to try other parsers.
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public class FieldParser extends ParserPart<FieldParser.FieldDeclaration> {
 

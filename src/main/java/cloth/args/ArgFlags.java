@@ -11,6 +11,9 @@ import java.util.List;
  * <p>
  * The enum is designed to standardize and simplify argument handling logic by providing a central
  * definition of supported flags and their properties.
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public enum ArgFlags {
 

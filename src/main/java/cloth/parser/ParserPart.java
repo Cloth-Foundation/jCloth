@@ -13,6 +13,14 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Represents an abstract base class for parsing components of a language's syntax. Provides utility
+ * methods to interact with the lexer, handle tokens, and process specific language constructs.
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
+ * @param <T> The return type for parsed structures.
+ */
 public abstract class ParserPart<T> implements Parsable<T> {
 
     @Getter

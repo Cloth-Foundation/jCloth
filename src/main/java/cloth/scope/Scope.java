@@ -8,7 +8,7 @@ import java.util.Map;
 public class Scope {
 
     @Getter
-    private static ArrayList<Map<Scope, Integer>> scopes = new ArrayList<>();
+    private static final ArrayList<Map<Scope, Integer>> scopes = new ArrayList<>();
 
     public Scope() {
 

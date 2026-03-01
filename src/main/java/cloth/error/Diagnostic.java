@@ -7,6 +7,9 @@ import cloth.token.span.SourceSpan;
  * warnings, or informational messages in a source file. Diagnostics typically
  * provide information about the location of the issue, additional context,
  * and guidance for resolution.
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public interface Diagnostic {
 

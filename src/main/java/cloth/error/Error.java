@@ -10,6 +10,9 @@ import lombok.Getter;
  * of error, and handling the error by printing and optionally terminating the program.
  * <p>
  * Subclasses must implement the {@link #getType()} method to specify the type of error.
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public abstract class Error extends Exception implements Diagnostic {
 

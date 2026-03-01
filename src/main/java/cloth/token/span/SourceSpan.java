@@ -4,6 +4,9 @@ package cloth.token.span;
  * Represents a span within a source file, defined by a start and end location.
  * This class provides methods to validate the span and determine its length.
  *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
+ *
  * @param start The starting location of the span in the source file.
  * @param end   The ending location of the span in the source file.
  */

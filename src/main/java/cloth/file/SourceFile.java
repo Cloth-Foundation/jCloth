@@ -11,6 +11,9 @@ import java.nio.file.Path;
  * Represents a source file with metadata and utility methods for path and extension handling.
  * Provides access to details such as the file name, directory, base name, and file extension.
  * Includes functionality to validate specific file formats and access file content.
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public class SourceFile {
 

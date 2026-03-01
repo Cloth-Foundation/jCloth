@@ -7,6 +7,9 @@ import cloth.token.span.SourceSpan;
  * Represents a token identified in the source code. A token is a unit of the code
  * parsed during lexical analysis, and this interface provides methods to access its
  * properties, such as its type, text representation, and location in the source.
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public interface IToken {
 

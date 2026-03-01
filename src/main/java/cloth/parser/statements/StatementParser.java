@@ -21,6 +21,9 @@ import java.util.ArrayList;
  * The {@link #parse()} entry point expects the opening and closing braces.
  * The {@link #parseBlock()} method parses only the interior statements and
  * is used when the caller has already consumed the opening brace (e.g. FuncParser).
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public class StatementParser extends ParserPart<Statement.Block> {
 

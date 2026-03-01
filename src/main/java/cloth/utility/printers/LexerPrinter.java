@@ -26,6 +26,9 @@ import java.util.List;
  * <li>Processes tokens produced by a {@link Lexer} and organizes them in a tabular format.</li>
  * <li>Computes column widths dynamically to ensure proper alignment of output.</li>
  * <li>Highlights changes between files by displaying the file name only when it changes.</li>
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public class LexerPrinter implements Printer<Lexer> {
 

@@ -16,6 +16,9 @@ import java.util.Map;
  * via their associated flags.
  * <p>
  * This class is immutable after construction.
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public final class ArgParser {
 
@@ -91,7 +94,7 @@ public final class ArgParser {
     * @throws NullPointerException If the specified flag is {@code null} or if the associated value is {@code null}.
     */
    public <T> T get(ArgFlags flag, Class<T> type) {
-      Object v = values.get(flag);
+      var v = values.get(flag);
       return type.cast(v);
    }
 

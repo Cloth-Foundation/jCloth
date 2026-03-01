@@ -45,6 +45,9 @@ import java.util.List;
  *  <li>A {@code QualifiedNameParser} takes a {@link Lexer} instance and {@link SourceFile} as input, allowing it to analyze the corresponding token stream.</li>
  *  <li>The parsing process results in a {@link QualifiedName} object, which contains the segments, source span, and separator.</li>
  * </ul>
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public class QualifiedNameParser extends ParserPart<QualifiedNameParser.QualifiedName> {
 

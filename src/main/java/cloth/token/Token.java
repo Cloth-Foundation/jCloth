@@ -9,6 +9,8 @@ import org.jetbrains.annotations.NotNull;
  * associated keyword or operator (if any), location in the source, and the text
  * representation.
  *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  * @param kind    The type of the token (e.g., keyword, operator, identifier, etc.).
  * @param keyword The keyword associated with the token if it represents a keyword.
  * @param operator The operator associated with the token if it represents an operator.

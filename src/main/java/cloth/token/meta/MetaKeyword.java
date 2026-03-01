@@ -9,6 +9,9 @@ import java.util.Locale;
  * <p>
  * MetaKeyword provides operations such as querying the properties of types or data,
  * converting values, or accessing default or boundary values for various types.
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public enum MetaKeyword {
 

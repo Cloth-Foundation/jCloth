@@ -21,6 +21,9 @@ import java.util.List;
  * <pre>( name: Type, name: Type? = default, ... )</pre>
  * Reusable across primary constructors, method declarations, and any other
  * context that requires a parameter list.
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public class ParameterListParser extends ParserPart<List<ParameterListParser.Parameter>> {
 

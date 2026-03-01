@@ -13,6 +13,9 @@ import java.nio.charset.StandardCharsets;
  * of special characters and international text in console applications.
  * <p>
  * This class is not intended to be instantiated.
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public final class ConsoleIO {
 

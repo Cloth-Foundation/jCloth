@@ -7,6 +7,9 @@ import java.io.PrintStream;
  * for printing objects of a specified type.
  *
  * @param <T> the type of object that this printer is capable of printing
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public interface Printer<T> {
 

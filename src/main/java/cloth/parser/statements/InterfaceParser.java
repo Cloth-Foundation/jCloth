@@ -20,6 +20,9 @@ import java.util.List;
  * In v1, interface members are limited to method signatures (no fields, no default methods).
  * Interfaces may only carry a visibility modifier; {@code static}, {@code final},
  * {@code abstract}, and {@code override} are rejected.
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public class InterfaceParser extends ParserPart<InterfaceParser.InterfaceDeclaration> {
 

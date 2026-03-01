@@ -10,7 +10,8 @@ import lombok.Getter;
  * <p/>
  * An object representation of the Source can be represented by the {@link SourceBuffer}
  *
- * @author Wylan Shoemaker 02/22/26
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  * @see SourceFile
  */
 public class SourceBuffer {

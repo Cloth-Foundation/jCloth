@@ -13,6 +13,9 @@ import cloth.token.span.SourceSpan;
  * validate module syntax and ensure proper structure according to the language grammar.
  * The module declaration specifies a logical grouping of code using a fully qualified
  * name and is expected to follow strict syntax rules.
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public final class ModuleParser extends ParserPart<ModuleParser.Module> {
 

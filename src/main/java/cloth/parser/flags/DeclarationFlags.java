@@ -5,6 +5,14 @@ import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Represents a collection of declaration flags for a programming construct, such as visibility,
+ * static, final, abstract, or override. This class aggregates metadata about how a construct is
+ * declared and provides utility methods for accessing this information.
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
+ */
 @Getter
 @Setter
 public class DeclarationFlags {

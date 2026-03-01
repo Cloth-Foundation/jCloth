@@ -18,6 +18,9 @@ import org.jetbrains.annotations.NotNull;
  * @param span    A {@link SourceSpan} object representing where in the source code the token resides.
  * @param lexeme  The raw string representation of the token as found in the source code.
  * @param keyword The {@link MetaKeyword} associated with this token, if applicable.
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public record MetaToken(TokenKind kind, SourceSpan span, String lexeme, MetaKeyword keyword) implements IToken {
 

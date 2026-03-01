@@ -32,6 +32,9 @@ import java.util.List;
  *    20  infix:   or            (left)
  *    10  infix:   ?:            (right)
  * </pre>
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public class ExpressionParser extends ParserPart<Expression> {
 

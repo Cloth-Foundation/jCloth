@@ -29,6 +29,9 @@ import java.util.List;
  * <li>CONTEXT: A constant string used to represent the printing context for errors.</li>
  * <li>TAB_WIDTH: A constant integer representing the number of spaces per tab.</li>
  * <li>INSTANCE: A singleton instance of the ErrorPrinter class that can be reused across the application.</li>
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public class ErrorPrinter implements Printer<Error> {
 

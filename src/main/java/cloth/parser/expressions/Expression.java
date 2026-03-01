@@ -9,6 +9,9 @@ import java.util.List;
 /**
  * Sealed interface representing all expression forms in the Cloth language.
  * Each variant is a record carrying the relevant AST children and a {@link SourceSpan}.
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public sealed interface Expression {
 

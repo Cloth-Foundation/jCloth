@@ -6,6 +6,16 @@ import cloth.parser.ParserPart;
 import cloth.token.Tokens;
 import cloth.token.span.SourceSpan;
 
+/**
+ * A subclass of {@code ParserPart} that is responsible for parsing import statements
+ * from a given source using a provided {@code Lexer} and {@code SourceFile}.
+ * The primary function of this class is to extract and wrap import-related data
+ * into an {@code Import} record, which consists of the import's qualified name
+ * and its location in the source file.
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
+ */
 public class ImportParser extends ParserPart<ImportParser.Import> {
 
     public ImportParser(Lexer lexer, SourceFile file) {

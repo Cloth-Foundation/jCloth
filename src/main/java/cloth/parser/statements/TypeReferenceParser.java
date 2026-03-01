@@ -14,6 +14,9 @@ import lombok.SneakyThrows;
  * Parses a type reference of the form {@code Type}, {@code Type?}, {@code Type[]},
  * or any combination such as {@code Type?[][]}. Reusable across parameter lists,
  * field declarations, method return types, and any other context that expects a type.
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public class TypeReferenceParser extends ParserPart<TypeReferenceParser.TypeReference> {
 

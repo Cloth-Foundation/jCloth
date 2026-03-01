@@ -7,6 +7,9 @@ import org.jetbrains.annotations.Nullable;
  * Defines a collection of token-related enums representing keywords and operators.
  * These enums provide classification, utility methods, and symbolic representation
  * of language constructs for lexical analysis.
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public class Tokens {
 

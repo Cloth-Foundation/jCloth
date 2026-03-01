@@ -10,6 +10,9 @@ import java.util.List;
 /**
  * Sealed interface representing all statement forms in the Cloth language.
  * Statements exist only inside method bodies.
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public sealed interface Statement {
 

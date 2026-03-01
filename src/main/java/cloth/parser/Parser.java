@@ -29,6 +29,9 @@ import java.util.List;
  * This class leverages specialized parsers, such as {@link ModuleParser},
  * {@link ImportParser}, and {@link ClassParser}, to handle the parsing for
  * specific parts of the source file.
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 @SuppressWarnings("unused")
 public class Parser extends ParserPart<Parser> {

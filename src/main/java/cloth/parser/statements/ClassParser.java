@@ -15,12 +15,32 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Parses class declarations from a source file.
+ * This parser is responsible for interpreting the structure of a class, including
+ * its modifiers, name, parameters, base class, implemented interfaces, fields, and methods.
+ * The parsing process ensures that the syntax adheres to the expected language grammar rules.
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
+ */
 public class ClassParser extends ParserPart<ClassParser.ClassDeclaration> {
 
     public ClassParser(Lexer lexer, SourceFile file) {
         super(lexer, file);
     }
 
+    /**
+     * Parses a class declaration from the provided token stream.
+     * This method handles parsing of declaration modifiers,
+     * class name, potential primary constructor parameters,
+     * base class specification, implemented interfaces, and
+     * the class body, including fields and methods.
+     *
+     * @return A {@link ClassDeclaration} instance representing the parsed class,
+     *         including its metadata (modifiers, name, base class, etc.),
+     *         members (fields and methods), and source span.
+     */
     @Override
     @SneakyThrows
     public ClassDeclaration parse() {
@@ -74,8 +94,15 @@ public class ClassParser extends ParserPart<ClassParser.ClassDeclaration> {
         return new ClassDeclaration(flags, name, primaryParams, baseClass, interfaces, fields, methods, span);
     }
 
-    // region Base Class & Interfaces
-
+    /**
+     * Parses and returns the base class specified for a class declaration.
+     * This method consumes the current token (which is expected to be a colon `:`)
+     * and proceeds to parse the base class description using a {@link QualifiedNameParser}.
+     * It also handles any balanced parentheses that may follow the base class name.
+     *
+     * @return a {@link QualifiedNameParser.QualifiedName} object representing the fully parsed
+     *         and validated base class name.
+     */
     private QualifiedNameParser.QualifiedName parseBaseClass() {
         advance(); // consume :
         QualifiedNameParser.QualifiedName baseClass = new QualifiedNameParser(getLexer(), getFile()).parse();
@@ -83,6 +110,18 @@ public class ClassParser extends ParserPart<ClassParser.ClassDeclaration> {
         return baseClass;
     }
 
+    /**
+     * Parses a list of implemented interfaces from the token stream.
+     * This method processes a sequence of qualified names, separating them
+     * by commas, and collects the resulting names into a list. Each qualified
+     * name is parsed using the {@link QualifiedNameParser}.
+     * <p>
+     * This method advances past tokens representing the `is` keyword and
+     * continues to parse until no more comma-separated qualified names are found.
+     *
+     * @return a list of {@link QualifiedNameParser.QualifiedName} objects representing
+     *         the parsed interfaces.
+     */
     private List<QualifiedNameParser.QualifiedName> parseInterfaces() {
         advance(); // consume `is`
         var interfaces = new ArrayList<QualifiedNameParser.QualifiedName>();
@@ -92,6 +131,26 @@ public class ClassParser extends ParserPart<ClassParser.ClassDeclaration> {
         return interfaces;
     }
 
+    /**
+     * Skips a balanced sequence of parentheses, starting with an opening parenthesis.
+     * <p>
+     * This method consumes the initial opening parenthesis token and continues to
+     * advance through subsequent tokens, ensuring that any nested pairs of parentheses
+     * are properly balanced. It stops when the matching closing parenthesis is found
+     * or when the end of the file is reached.
+     * <p>
+     * The method uses a depth counter to track the nesting level of parentheses:
+     * <ul>
+     *   <li>Each opening parenthesis (`Tokens.Operator.LeftParen`) increases the count.</li>
+     *   <li>Each closing parenthesis (`Tokens.Operator.RightParen`) decreases the count.</li>
+     * </ul>
+     * <p>
+     * The loop terminates when the depth returns to zero, indicating that the entire
+     * balanced pair has been skipped.
+     *
+     * This method is typically used during parsing to bypass sections of code enclosed
+     * in parentheses that are not immediately relevant to the current parsing context.
+     */
     private void skipBalancedParens() {
         advance(); // consume (
         int depth = 1;
@@ -102,10 +161,18 @@ public class ClassParser extends ParserPart<ClassParser.ClassDeclaration> {
         }
     }
 
-    // endregion
-
-    // region Class Body
-
+    /**
+     * Parses the body of a class and collects its fields and methods.
+     * This method continues parsing until it encounters a closing right brace
+     * or reaches the end of the file. Fields and methods are identified
+     * based on their respective declaration keywords and are added to the
+     * provided lists.
+     *
+     * @param fields A list to collect instances of {@link FieldParser.FieldDeclaration} representing
+     *               parsed field declarations within the class body.
+     * @param methods A list to collect instances of {@link FuncParser.FuncDeclaration} representing
+     *                parsed method declarations within the class body.
+     */
     private void parseClassBody(List<FieldParser.FieldDeclaration> fields,
                                 List<FuncParser.FuncDeclaration> methods) {
         while (!is(Tokens.Operator.RightBrace) && !isEndOfFile()) {
@@ -143,10 +210,11 @@ public class ClassParser extends ParserPart<ClassParser.ClassDeclaration> {
         }
     }
 
-    // endregion
-
-    // region Records
-
+    /**
+     * Represents the declaration of a class within the source code. This record encapsulates
+     * various components of a class, including its modifiers, name, constructor parameters,
+     * base class, implemented interfaces, fields, methods, and location within the source.
+     */
     public record ClassDeclaration(
         DeclarationFlags flags,
         IToken name,
@@ -158,5 +226,4 @@ public class ClassParser extends ParserPart<ClassParser.ClassDeclaration> {
         SourceSpan span
     ) {}
 
-    // endregion
 }

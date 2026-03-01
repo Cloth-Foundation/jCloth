@@ -12,6 +12,9 @@ import cloth.token.IToken;
  * @param token  The core lexical token, providing data such as token type, text, and location.
  * @param trivia The trivia associated with the token, which includes leading and trailing
  *               non-essential elements like whitespace or comments.
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public record LexedToken(IToken token, Trivia trivia) {
 }

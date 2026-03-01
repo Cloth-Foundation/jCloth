@@ -21,76 +21,9 @@ import java.util.ArrayList;
  * language's lexical grammar. It processes the input character stream, identifies
  * tokens, and provides functionality for lookahead and consuming tokens.
  * <p>
- * Fields:
- * <li>kNestedBlockComments: Constant indicating support for nested block comments.</li>
- * <li> kLookahead: The maximum number of tokens the lexer can look ahead.</li>
- * <li> la_head_: Head index for the lookahead buffer.</li>
- * <li> la_size_: Current size of the lookahead buffer.</li>
- * <li> la_: The lookahead buffer storing pre-lexed tokens.</li>
- * <li> text_: The complete source text being tokenized.</li>
- * <li> current_: The current parsing position in the buffer.</li>
- * <li> end_: The end position of the input buffer.</li>
- * <li> offset_: The current character offset in the source.</li>
- * <li> line_: The current line number in the source.</li>
- * <li> column_: The current column number in the source.</li>
- * <li> token_begin_: The start position of the current token.</li>
- * <li> token_offset_: The character offset where the current token starts.</li>
- * <li> token_line_: The line number where the token starts.</li>
- * <li> token_column_: The column number where the token starts.</li>
- * <li> buffer: The source buffer containing the text and file information.</li>
- * <li> diagnostics: A sink for recording errors and warnings during lexical analysis.</li>
- * <li> options: Configuration options for controlling the behavior of the lexer.</li>
- * <p>
- * Constructors:
- * <li> Lexer(SourceBuffer buffer, DiagnosticSink diagnostics, LexerOptions options):
- *   Initializes the lexer with a source buffer, a diagnostic sink for reporting issues,
- *   and options for configuring lexer behavior.</li>
- * <p>
- * Methods:
- * <li> peek(int n): Returns the n-th token from the lookahead buffer without consuming it.</li>
- * <li> next(): Consumes and returns the next token.</li>
- * <li> eof(): Checks if the lexer has reached the end of the input source.</li>
- * <li> atEnd(): Determines if the lexer is at the end of the buffer.</li>
- * <li> current(): Returns the current character at the lexer’s reading position.</li>
- * <li> fillLookAhead(int need): Ensures that the lookahead buffer contains the required number of tokens.</li>
- * <li> lookaheadChar(int n): Returns the n-th character from the current position.</li>
- * <li> lexOne(): Lexes the next token from the input stream.</li>
- * <li> emit(LexedToken token): Processes and returns a token after it has been lexed.</li>
- * <li> advance(): Advances the lexer by one character.</li>
- * <li> advanceN(int n): Advances the lexer by n characters.</li>
- * <li> match(char c): Checks if the current character matches the given character.</li>
- * <li> match2(char a, char b): Checks if the next two characters match the given character pair.</li>
- * <li> matchString(String s): Checks if the input at the current position matches the given string.</li>
- * <li> isWhitespace(char c): Determines if the given character is a whitespace character.</li>
- * <li> isNewline(char c): Determines if the given character is a newline character.</li>
- * <li> isDigit(char c): Checks if the given character is a numerical digit.</li>
- * <li> isHexDigit(char c): Checks if the character is a valid hexadecimal digit.</li>
- * <li> isAlpha(char c): Checks if the character is an alphabet letter.</li>
- * <li> isIdentifierStart(char c): Determines whether the character can start an identifier.</li>
- * <li> isIdentifierContinue(char c): Determines whether the character can continue an identifier.</li>
- * <li> consumeTrivia(ArrayList<TriviaPiece> outLeading): Processes leading trivia, such as comments and spaces.</li>
- * <li> maybeConsumeTrailingTrivia(Trivia outTrailing): Processes trailing trivia if available.</li>
- * <li> beginToken(): Marks the starting location of a new token.</li>
- * <li> endTokenSpan(): Marks and retrieves the source span for the current token.</li>
- * <li> tokenLexeme(): Retrieves the lexeme text for the current token.</li>
- * <li> makeToken(TokenKind kind): Creates a token with a specified kind.</li>
- * <li> makeToken(TokenKind kind, Tokens.Keyword keyword): Creates a token of the keyword type.</li>
- * <li> makeToken(TokenKind kind, Tokens.Operator operator): Creates a token of the operator type.</li>
- * <li> makeErrorToken(String message): Creates an error token with a given message.</li>
- * <li> scanEndOfFile(): Handles the end-of-file token scanning.</li>
- * <li> scanWhitespaceToken(): Lexes whitespace tokens.</li>
- * <li> scanIdentifierOrKeyword(): Lexes identifiers or keywords.</li>
- * <li> scanNumber(): Lexes numeric literals.</li>
- * <li> scanStringLiteral(char quote): Lexes string literals enclosed by a given quoting character.</li>
- * <li> scanCommentOrSlashOperator(): Lexes either a comment or a slash operator.</li>
- * <li> scanOperatorOrPunctuation(): Lexes operators or punctuation symbols.</li>
- * <li> currentLocation(): Retrieves the current source location in the buffer.</li>
- * <li> consumeLineComment(): Consumes and processes a single-line comment.</li>
- * <li> consumeBlockComment(): Consumes and processes a block comment.</li>
- * <li> consumeEscapeSequence(): Handles escape sequences inside tokens.</li>
- * <li> resolveKeyword(String ident): Maps an identifier to its corresponding keyword, if applicable.</li>
- * <li> resolveMetaKeyword(String ident): Maps an identifier to its corresponding meta keyword, if applicable.</li>
- * <li> bumpLocation(char consumed): Updates the lexer’s location information after consuming a character.</li>
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public final class Lexer {
 
@@ -99,11 +32,11 @@ public final class Lexer {
     private final int kLookahead = 8;
     private int lookaheadIndex = 0;
     private int lookaheadCount = 0;
-    private LexedToken[] lookaheadTokens = new LexedToken[kLookahead];
+    private final LexedToken[] lookaheadTokens = new LexedToken[kLookahead];
 
     private final char[] text;
     private int current;
-    private int end;
+    private final int end;
 
     @Getter
     private int offset;

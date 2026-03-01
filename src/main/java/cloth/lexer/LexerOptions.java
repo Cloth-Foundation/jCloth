@@ -10,6 +10,9 @@ import java.util.ArrayList;
  * This class provides various settings that influence the process
  * of tokenizing input, including handling of whitespace, comments,
  * trivia, and character encoding.
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public class LexerOptions {
 

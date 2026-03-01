@@ -21,6 +21,9 @@ import java.util.List;
  * Structs are small, data-centric value types with optional primary parameters
  * and a body containing fields (and eventually methods).
  * Structs do NOT support inheritance, interfaces, or the {@code abstract}/{@code override} modifiers.
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public class StructParser extends ParserPart<StructParser.StructDeclaration> {
 

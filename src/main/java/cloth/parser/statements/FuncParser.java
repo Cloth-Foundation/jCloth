@@ -20,6 +20,9 @@ import java.util.List;
  * Abstract methods omit the body and terminate with a semicolon:
  * <pre>abstract func name(params): ReturnType;</pre>
  * The body is parsed into a {@link Statement.Block} via {@link StatementParser}.
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public class FuncParser extends ParserPart<FuncParser.FuncDeclaration> {
 

@@ -23,6 +23,9 @@ import java.util.List;
  * <p>
  * When a primary constructor is present, each case provides positional constructor
  * arguments. When absent, cases may declare data payloads ({@code name: Type}).
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public class EnumParser extends ParserPart<EnumParser.EnumDeclaration> {
 

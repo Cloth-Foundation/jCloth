@@ -19,6 +19,9 @@ import java.util.function.Function;
  * @param parse        A parser function to convert a string representation into the appropriate type.
  * @param takesValue   A flag indicating whether this argument requires an associated value.
  * @param description  A brief description of the flag's purpose or usage.
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public record ArgFlag<T>(int dashCount, String name, List<String> aliases, T defaultValue, Function<String, T> parse, boolean takesValue, String description) {
 

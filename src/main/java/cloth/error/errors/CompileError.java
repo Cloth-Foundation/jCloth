@@ -16,6 +16,9 @@ import cloth.token.span.SourceSpan;
  * to provide diagnostic capability for reporting and handling the error.
  * <p>
  * The type of this error is always {@link ErrorType#COMPILE_ERROR}.
+ *
+ * @author Wylan Shoemaker
+ * @since 1.0.0
  */
 public class CompileError extends Error {
 
