@@ -13,66 +13,42 @@
    2. Conformance Language (MUST/SHOULD/MAY)
    3. Terminology
 
-2. Lexical Structure (TBD)
+2. Lexical Structure
    1. Source Text and Encoding
    2. Tokens
    3. Meta Tokens
    4. Comments and Whitespace
    5. Identifiers
    6. Keywords
-   7. Meta Keywords
+   7. Operators and Punctuation
    8. Literals
 
 3. Program Structure
-   1. Modules
-   2. Imports
-   3. Compilation Units
-   4. Visibility and Access Control
+   1. Parsing Model and Expectations
+   2. Modules
+   3. Imports
+   4. Types as the Top-Level Declaration Unit
+   5. Visibility and Access Control
 
 4. Types
-   1. Built-in Primitive Types
-   2. Nullability (`?`)
-   3. Arrays
-   4. User-defined Types (Classes, Interfaces)
-   5. Type Qualifiers (e.g., `atomic`)
-   6. Type Conversions (TBD)
 
 5. Declarations
-   1. Class Declarations
-   2. Primary Constructors
-   3. Field Declarations
-   4. Method Declarations
-   5. Nested Types
-   6. Static Members
-   7. Constants (`final` vs `const`)
 
-6. Statements and Expressions (TBD)
-   1. Blocks
-   2. Control Flow (`if`, `while`, `for`, `return`)
-   3. Assignment
-   4. Calls
-   5. Operators
-   6. String concatenation
+6. Entrypoint
 
-7. Object Model
-   1. `this`
-   2. Inheritance
-   3. Overriding (`override`)
-   4. Final members (`final`)
-   5. Dynamic Dispatch (TBD)
+7. Expressions
 
-8. Memory Model
-   1. Allocation (`new`)
-   2. Deallocation (`delete`)
-   3. Ownership and `ref`
-   4. (Optional) GC Mode (TBD)
+8. Statements
 
-9. Entrypoint
-   1. `main` selection
-   2. Valid signatures
-   3. Errors
+9. Classes, Members, and Initialization Order
+   1. Initialization and Construction
+   2. Member Lookup and Shadowing
+   3. Examples
+   4. Construction Model (Primary Parameters, Defaults, and Factories)
 
-10. Standard Library Surface (Non-normative) (TBD)
+10. Functions and Methods
+
+11. Meta Accessors (Objects and Primitives)
 
 ---
 
