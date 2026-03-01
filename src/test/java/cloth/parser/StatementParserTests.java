@@ -1040,4 +1040,64 @@ public class StatementParserTests {
     }
 
     // endregion
+
+    // region Defer
+
+    @Test
+    public void testDeferSimpleCall() throws IOException {
+        var block = parseBlock("defer close();");
+
+        assertEquals(1, block.statements().size());
+        var defer = (Statement.Defer) block.statements().getFirst();
+        assertEquals("defer", defer.keyword().lexeme());
+        assertInstanceOf(Expression.Call.class, defer.call());
+        assertEquals("close", ((Expression.Identifier) defer.call().callee()).name().lexeme());
+    }
+
+    @Test
+    public void testDeferMethodCall() throws IOException {
+        var block = parseBlock("defer file.close();");
+
+        var defer = (Statement.Defer) block.statements().getFirst();
+        var call = defer.call();
+        assertInstanceOf(Expression.MemberAccess.class, call.callee());
+    }
+
+    @Test
+    public void testDeferCallWithArguments() throws IOException {
+        var block = parseBlock("defer log(\"leaving scope\");");
+
+        var defer = (Statement.Defer) block.statements().getFirst();
+        assertEquals(1, defer.call().arguments().size());
+    }
+
+    @Test
+    public void testDeferRejectsNonCallExpression() {
+        assertThrows(CompileError.class, () ->
+            parseBlock("defer x;"));
+    }
+
+    @Test
+    public void testDeferRejectsIdentifier() {
+        assertThrows(CompileError.class, () ->
+            parseBlock("defer obj.field;"));
+    }
+
+    @Test
+    public void testDeferRejectsLiteral() {
+        assertThrows(CompileError.class, () ->
+            parseBlock("defer 42;"));
+    }
+
+    @Test
+    public void testMultipleDeferStatementsInBlock() throws IOException {
+        var block = parseBlock("defer a(); defer b(); defer c();");
+
+        assertEquals(3, block.statements().size());
+        assertInstanceOf(Statement.Defer.class, block.statements().get(0));
+        assertInstanceOf(Statement.Defer.class, block.statements().get(1));
+        assertInstanceOf(Statement.Defer.class, block.statements().get(2));
+    }
+
+    // endregion
 }

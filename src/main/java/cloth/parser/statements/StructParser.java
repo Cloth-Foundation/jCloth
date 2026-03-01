@@ -31,6 +31,16 @@ public class StructParser extends ParserPart<StructParser.StructDeclaration> {
         super(lexer, file);
     }
 
+    /**
+     * Parses a struct declaration from the provided token stream, validating its components
+     * and collecting its fields, methods, and optional primary constructor. This method ensures
+     * that the struct adheres to the language rules and generates appropriate compile errors
+     * for invalid constructs.
+     *
+     * @return A {@code StructDeclaration} that represents the definition of the parsed struct,
+     *         including its modifiers, name, primary constructor (if present), fields, methods,
+     *         and the source code location (span) of the declaration.
+     */
     @Override
     @SneakyThrows
     public StructDeclaration parse() {
@@ -91,16 +101,20 @@ public class StructParser extends ParserPart<StructParser.StructDeclaration> {
         return new StructDeclaration(flags, name, primaryParams, fields, methods, span);
     }
 
-    // region Struct Body
-
-    private void parseStructBody(List<FieldParser.FieldDeclaration> fields,
-                                 List<FuncParser.FuncDeclaration> methods) {
+    /**
+     * Parses the body of a struct, identifying and collecting field and method declarations.
+     * It processes tokens within the struct body until a closing right brace or the end of file is encountered.
+     * Depending on the identified keyword, fields or methods are parsed and added to the respective lists.
+     * If an unknown member is encountered, it is skipped gracefully.
+     *
+     * @param fields  a list to collect parsed field declarations. Each field is parsed using {@code FieldParser}.
+     * @param methods a list to collect parsed method declarations. Each method is parsed using {@code FuncParser}.
+     */
+    private void parseStructBody(List<FieldParser.FieldDeclaration> fields, List<FuncParser.FuncDeclaration> methods) {
         while (!is(Tokens.Operator.RightBrace) && !isEndOfFile()) {
             Tokens.Keyword memberKeyword = peekDeclarationKeyword();
 
-            if (memberKeyword == Tokens.Keyword.Var
-                || memberKeyword == Tokens.Keyword.Let
-                || memberKeyword == Tokens.Keyword.Const) {
+            if (memberKeyword == Tokens.Keyword.Var || memberKeyword == Tokens.Keyword.Let || memberKeyword == Tokens.Keyword.Const) {
                 fields.add(new FieldParser(getLexer(), getFile()).parse());
             } else if (memberKeyword == Tokens.Keyword.Func) {
                 methods.add(new FuncParser(getLexer(), getFile()).parse());
@@ -110,6 +124,23 @@ public class StructParser extends ParserPart<StructParser.StructDeclaration> {
         }
     }
 
+    /**
+     * Skips over unknown or unrecognized members in the input token stream.
+     * This method is designed to handle cases where an unknown member is encountered during parsing,
+     * advancing the token stream to bypass the unrecognized structure.
+     * <p>
+     * If the unknown member is enclosed within a pair of braces ({@code { }}) indicating a nested structure,
+     * this method will ensure proper handling by keeping track of brace depth and advancing through
+     * the token stream until the entire nested structure has been skipped.
+     * <p>
+     * If the unknown member is not a brace-enclosed structure, the method simply advances the token stream
+     * by one token to move past it.
+     * <p>
+     * This method plays a key role in resilient parsing by allowing the parser to handle unrecognized elements
+     * gracefully without terminating or throwing errors.
+     * <p>
+     * TODO: This will be removed as we will want to throw errors for unknown members.
+     */
     private void skipUnknownMember() {
         if (is(Tokens.Operator.LeftBrace)) {
             advance();
@@ -125,18 +156,23 @@ public class StructParser extends ParserPart<StructParser.StructDeclaration> {
         }
     }
 
-    // endregion
+    /**
+     * Represents the declaration of a struct, which is a composite data type consisting
+     * of fields, methods, and optionally a primary constructor. Structs are a key building
+     * block for defining custom types in the language.
+     *
+     * @param flags                 The declaration flags that provide modifiers and visibility
+     *                              information about the struct (e.g., visibility, static, or final).
+     * @param name                  The name of the struct, represented as a token.
+     * @param primaryConstructor    An optional list of parameters representing the primary constructor
+     *                              of the struct. If {@code null}, the struct does not have a primary
+     *                              constructor.
+     * @param fields                A list of field declarations that define the properties of the struct.
+     * @param methods               A list of method declarations that define the behavior or functionality
+     *                              associated with the struct.
+     * @param span                  The source span that represents the location of the struct
+     *                              declaration in the source code.
+     */
+    public record StructDeclaration(DeclarationFlags flags, IToken name, @Nullable List<ParameterListParser.Parameter> primaryConstructor, List<FieldParser.FieldDeclaration> fields, List<FuncParser.FuncDeclaration> methods, SourceSpan span) {}
 
-    // region Records
-
-    public record StructDeclaration(
-        DeclarationFlags flags,
-        IToken name,
-        @Nullable List<ParameterListParser.Parameter> primaryConstructor,
-        List<FieldParser.FieldDeclaration> fields,
-        List<FuncParser.FuncDeclaration> methods,
-        SourceSpan span
-    ) {}
-
-    // endregion
 }

@@ -12,6 +12,14 @@ package cloth.parser;
  */
 public interface Parsable<T> {
 
+    /**
+     * Parses and returns an instance of type {@code T}.
+     * The implementation defines the logic for interpreting input data
+     * and converting it into the appropriate object representation
+     * of the specified type.
+     *
+     * @return An instance of type {@code T} resulting from the parsing process.
+     */
     T parse();
 
 }

@@ -65,4 +65,7 @@ public sealed interface Statement {
     record Continue(IToken keyword, SourceSpan span) implements Statement {}
 
     record Delete(Expression target, SourceSpan span) implements Statement {}
+
+    /** {@code defer <callExpr>;} — deferred call, runs at scope exit in LIFO order. */
+    record Defer(IToken keyword, Expression.Call call, SourceSpan span) implements Statement {}
 }

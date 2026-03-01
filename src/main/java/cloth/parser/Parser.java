@@ -40,6 +40,12 @@ public class Parser extends ParserPart<Parser> {
         super(lexer, file);
     }
 
+    /**
+     * Parses a source file into its modular components.
+     * The result is stored internally within the {@code Parser} instance.
+     *
+     * @return The current {@code Parser} instance after completing the parsing process.
+     */
     @Override
     public Parser parse() {
         var module = parseModule();
@@ -49,10 +55,29 @@ public class Parser extends ParserPart<Parser> {
         return this;
     }
 
+    /**
+     * Parses the module declaration from the source file.
+     * Invokes the {@link ModuleParser} to process the module-specific syntax,
+     * such as the fully qualified module name and related structural validations.
+     *
+     * @return A {@link ModuleParser.Module} instance representing the parsed module declaration,
+     *         including its fully qualified name and source span information.
+     */
     private ModuleParser.Module parseModule() {
         return new ModuleParser(getLexer(), getFile()).parse();
     }
 
+    /**
+     * Parses import statements from the current source file using an {@code ImportParser}.
+     * Iteratively processes the input to extract all valid import declarations,
+     * adds them to a list, and returns the constructed list as the result.
+     * Each import declaration is represented as an {@code ImportParser.Import} instance,
+     * encapsulating the qualified name and source span of the import.
+     *
+     * @return A list of {@code ImportParser.Import} instances representing
+     *         all import declarations in the source file, or an empty list if no
+     *         imports are found.
+     */
     private List<ImportParser.Import> parseImports() {
         var imports = new ArrayList<ImportParser.Import>();
         ImportParser.Import imp;
@@ -62,6 +87,15 @@ public class Parser extends ParserPart<Parser> {
         return imports;
     }
 
+    /**
+     * Parses the top-level declarations in the source file.
+     * This method iterates through the input stream of tokens and processes
+     * declarations of classes, enums, structs, and interfaces using their respective parsers.
+     * <p>
+     * The method identifies the type of declaration based on the keyword at the current
+     * parsing position and invokes the appropriate parser to handle it.
+     * All parsed declarations are collected in separate lists, grouped by their types.
+     */
     private void parseTopLevelDeclarations() {
         var classes = new ArrayList<ClassParser.ClassDeclaration>();
         var enums = new ArrayList<EnumParser.EnumDeclaration>();

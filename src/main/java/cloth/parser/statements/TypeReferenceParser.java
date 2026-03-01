@@ -24,6 +24,15 @@ public class TypeReferenceParser extends ParserPart<TypeReferenceParser.TypeRefe
         super(lexer, file);
     }
 
+    /**
+     * Parses a type reference from the source code, supporting both nullable and
+     * array types. This method processes a base type, followed by optional nullability
+     * (indicated by {@code ?}) and array dimensions (indicated by {@code []}).
+     *
+     * @return a {@code TypeReference} instance representing the parsed type, including
+     *         its base name, nullability, array depth, and source span.
+     * @throws CompileError if the type reference is invalid or syntactically incorrect.
+     */
     @Override
     @SneakyThrows
     public TypeReference parse() {
@@ -60,10 +69,16 @@ public class TypeReferenceParser extends ParserPart<TypeReferenceParser.TypeRefe
         return new TypeReference(baseName, nullable, arrayDepth, span);
     }
 
-    public record TypeReference(
-        IToken baseName,
-        boolean nullable,
-        int arrayDepth,
-        SourceSpan span
-    ) {}
+    /**
+     * Represents a type reference in the source code, defining its base type name,
+     * nullability, array dimensions, and source span. A type reference is used
+     * in various contexts where type specifications are required, such as variable
+     * declarations, method return types, and parameters.
+     *
+     * @param baseName   The base type name represented as a token.
+     * @param nullable   Indicates whether the type is nullable (e.g., {@code Type?}).
+     * @param arrayDepth The number of array dimensions (e.g., {@code Type[][]} has an array depth of 2).
+     * @param span       The source span covering the type reference in the code.
+     */
+    public record TypeReference(IToken baseName, boolean nullable, int arrayDepth, SourceSpan span) {}
 }

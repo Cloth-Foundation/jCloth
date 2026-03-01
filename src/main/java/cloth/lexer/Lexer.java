@@ -431,28 +431,32 @@ public final class Lexer {
 
     /**
      * Determines if the given character is a valid starting character for an identifier.
+     * <p>
+     * When {@code --allow-unicode} is enabled, any character satisfying
+     * {@link Character#isUnicodeIdentifierStart(char)} is accepted in addition to
+     * the ASCII baseline ({@code A-Z}, {@code a-z}, {@code _}, {@code $}).
      *
      * @param c the character to be checked
-     * @return true if the character is an alphabetic character or a dollar sign ('$'),
-     *         false otherwise
+     * @return true if the character may begin an identifier, false otherwise
      */
-    // TODO: Unicode identifier support (e.g. isIdentStart can include non-ASCII letters, isIdentContinue can include combining marks, etc.)
-    // TODO: We can basically make any rules we want for identifiers, as long as the lexer and parser are consistent. For example, we could allow emojis in identifiers if we wanted to. The current rules are just a common baseline.
     private boolean isIdentifierStart(char c) {
-        return isAlpha(c) || c == Tokens.Operator.Dollar.toChar();
+        if (isAlpha(c) || c == Tokens.Operator.Dollar.toChar()) return true;
+        return options.isAllowUnicodeCharacters() && Character.isUnicodeIdentifierStart(c);
     }
 
     /**
-     * Determines if the given character is a valid continuation character
-     * for an identifier in a programming context. A character is considered
-     * valid if it is an alphabetic character, a numeric digit, or a dollar sign ('$').
+     * Determines if the given character is a valid continuation character for an identifier.
+     * <p>
+     * When {@code --allow-unicode} is enabled, any character satisfying
+     * {@link Character#isUnicodeIdentifierPart(char)} is accepted in addition to
+     * the ASCII baseline ({@code A-Z}, {@code a-z}, {@code 0-9}, {@code _}, {@code $}).
      *
      * @param c the character to be evaluated
-     * @return true if the character can be part of an identifier after the initial character,
-     *         otherwise false
+     * @return true if the character may continue an identifier, false otherwise
      */
     private boolean isIdentifierContinue(char c) {
-        return isAlpha(c) || isDigit(c) || c == Tokens.Operator.Dollar.toChar();
+        if (isAlpha(c) || isDigit(c) || c == Tokens.Operator.Dollar.toChar()) return true;
+        return options.isAllowUnicodeCharacters() && Character.isUnicodeIdentifierPart(c);
     }
 
     /**
