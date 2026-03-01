@@ -508,6 +508,235 @@ public class StatementParserTests {
 
     // endregion
 
+    // region C-style for loop
+
+    @Test
+    public void testForLoopBasic() throws IOException {
+        var block = parseBlock("for (var i: i32 = 0; i < 10; i = i + 1) { foo(); }");
+
+        assertEquals(1, block.statements().size());
+        assertInstanceOf(Statement.For.class, block.statements().getFirst());
+
+        var forStmt = (Statement.For) block.statements().getFirst();
+        assertNotNull(forStmt.init());
+        assertInstanceOf(Statement.VarDeclaration.class, forStmt.init());
+        var init = (Statement.VarDeclaration) forStmt.init();
+        assertEquals(FieldParser.BindingKind.VAR, init.binding());
+        assertEquals("i", init.name().lexeme());
+
+        assertNotNull(forStmt.condition());
+        assertInstanceOf(Expression.Binary.class, forStmt.condition());
+
+        assertNotNull(forStmt.step());
+        var step = (Statement.Assignment) forStmt.step();
+        assertEquals("i", ((Expression.Identifier) step.target()).name().lexeme());
+
+        assertEquals(1, forStmt.body().statements().size());
+    }
+
+    @Test
+    public void testForLoopLetInit() throws IOException {
+        var block = parseBlock("for (let i: i32 = 0; i < 5; i = i + 1) { }");
+
+        var forStmt = (Statement.For) block.statements().getFirst();
+        var init = (Statement.VarDeclaration) forStmt.init();
+        assertEquals(FieldParser.BindingKind.LET, init.binding());
+    }
+
+    @Test
+    public void testForLoopAssignmentInit() throws IOException {
+        var block = parseBlock("for (i = 0; i < 10; i = i + 1) { }");
+
+        var forStmt = (Statement.For) block.statements().getFirst();
+        assertInstanceOf(Statement.Assignment.class, forStmt.init());
+        var init = (Statement.Assignment) forStmt.init();
+        assertEquals("i", ((Expression.Identifier) init.target()).name().lexeme());
+    }
+
+    @Test
+    public void testForLoopNoInit() throws IOException {
+        var block = parseBlock("for (; i < 10; i = i + 1) { }");
+
+        var forStmt = (Statement.For) block.statements().getFirst();
+        assertNull(forStmt.init());
+        assertNotNull(forStmt.condition());
+        assertNotNull(forStmt.step());
+    }
+
+    @Test
+    public void testForLoopNoCondition() throws IOException {
+        var block = parseBlock("for (var i: i32 = 0; ; i = i + 1) { }");
+
+        var forStmt = (Statement.For) block.statements().getFirst();
+        assertNotNull(forStmt.init());
+        assertNull(forStmt.condition());
+        assertNotNull(forStmt.step());
+    }
+
+    @Test
+    public void testForLoopNoStep() throws IOException {
+        var block = parseBlock("for (var i: i32 = 0; i < 10; ) { }");
+
+        var forStmt = (Statement.For) block.statements().getFirst();
+        assertNotNull(forStmt.init());
+        assertNotNull(forStmt.condition());
+        assertNull(forStmt.step());
+    }
+
+    @Test
+    public void testForLoopAllEmpty() throws IOException {
+        var block = parseBlock("for (; ; ) { }");
+
+        var forStmt = (Statement.For) block.statements().getFirst();
+        assertNull(forStmt.init());
+        assertNull(forStmt.condition());
+        assertNull(forStmt.step());
+        assertTrue(forStmt.body().statements().isEmpty());
+    }
+
+    @Test
+    public void testForLoopWithBody() throws IOException {
+        var block = parseBlock("""
+            for (var i: i32 = 0; i < 3; i = i + 1) {
+                foo();
+                bar();
+            }""");
+
+        var forStmt = (Statement.For) block.statements().getFirst();
+        assertEquals(2, forStmt.body().statements().size());
+    }
+
+    @Test
+    public void testForLoopWithInitializerExpression() throws IOException {
+        var block = parseBlock("for (var x: i32 = 1 + 2; x < 100; x = x * 2) { }");
+
+        var forStmt = (Statement.For) block.statements().getFirst();
+        var init = (Statement.VarDeclaration) forStmt.init();
+        assertNotNull(init);
+        assertInstanceOf(Expression.Binary.class, init.initializer());
+    }
+
+    // endregion
+
+    // region Foreach loop
+
+    @Test
+    public void testForEachBasic() throws IOException {
+        var block = parseBlock("for (x in items) { foo(); }");
+
+        assertEquals(1, block.statements().size());
+        assertInstanceOf(Statement.ForEach.class, block.statements().getFirst());
+
+        var forEach = (Statement.ForEach) block.statements().getFirst();
+        assertEquals("x", forEach.name().lexeme());
+        assertInstanceOf(Expression.Identifier.class, forEach.iterable());
+        assertEquals("items", ((Expression.Identifier) forEach.iterable()).name().lexeme());
+        assertEquals(1, forEach.body().statements().size());
+    }
+
+    @Test
+    public void testForEachEmptyBody() throws IOException {
+        var block = parseBlock("for (item in arr) { }");
+
+        var forEach = (Statement.ForEach) block.statements().getFirst();
+        assertEquals("item", forEach.name().lexeme());
+        assertTrue(forEach.body().statements().isEmpty());
+    }
+
+    @Test
+    public void testForEachMemberAccessIterable() throws IOException {
+        var block = parseBlock("for (x in obj.items) { }");
+
+        var forEach = (Statement.ForEach) block.statements().getFirst();
+        assertInstanceOf(Expression.MemberAccess.class, forEach.iterable());
+    }
+
+    @Test
+    public void testForEachCallIterable() throws IOException {
+        var block = parseBlock("for (x in getItems()) { }");
+
+        var forEach = (Statement.ForEach) block.statements().getFirst();
+        assertInstanceOf(Expression.Call.class, forEach.iterable());
+    }
+
+    @Test
+    public void testForEachWithMultipleStatements() throws IOException {
+        var block = parseBlock("""
+            for (item in list) {
+                process(item);
+                count = count + 1;
+            }""");
+
+        var forEach = (Statement.ForEach) block.statements().getFirst();
+        assertEquals(2, forEach.body().statements().size());
+    }
+
+    // endregion
+
+    // region Break and Continue
+
+    @Test
+    public void testBreakStatement() throws IOException {
+        var block = parseBlock("break;");
+
+        assertEquals(1, block.statements().size());
+        assertInstanceOf(Statement.Break.class, block.statements().getFirst());
+
+        var brk = (Statement.Break) block.statements().getFirst();
+        assertEquals("break", brk.keyword().lexeme());
+    }
+
+    @Test
+    public void testContinueStatement() throws IOException {
+        var block = parseBlock("continue;");
+
+        assertEquals(1, block.statements().size());
+        assertInstanceOf(Statement.Continue.class, block.statements().getFirst());
+
+        var cont = (Statement.Continue) block.statements().getFirst();
+        assertEquals("continue", cont.keyword().lexeme());
+    }
+
+    @Test
+    public void testBreakInsideWhile() throws IOException {
+        var block = parseBlock("while x { if done { break; } }");
+
+        var whileStmt = (Statement.While) block.statements().getFirst();
+        var ifStmt = (Statement.If) whileStmt.body().statements().getFirst();
+        assertInstanceOf(Statement.Break.class, ifStmt.thenBlock().statements().getFirst());
+    }
+
+    @Test
+    public void testContinueInsideWhile() throws IOException {
+        var block = parseBlock("while x { if skip { continue; } foo(); }");
+
+        var whileStmt = (Statement.While) block.statements().getFirst();
+        assertEquals(2, whileStmt.body().statements().size());
+        var ifStmt = (Statement.If) whileStmt.body().statements().getFirst();
+        assertInstanceOf(Statement.Continue.class, ifStmt.thenBlock().statements().getFirst());
+    }
+
+    @Test
+    public void testBreakInsideFor() throws IOException {
+        var block = parseBlock("for (var i: i32 = 0; i < 10; i = i + 1) { if done { break; } }");
+
+        var forStmt = (Statement.For) block.statements().getFirst();
+        var ifStmt = (Statement.If) forStmt.body().statements().getFirst();
+        assertInstanceOf(Statement.Break.class, ifStmt.thenBlock().statements().getFirst());
+    }
+
+    @Test
+    public void testContinueInsideForEach() throws IOException {
+        var block = parseBlock("for (x in items) { if skip { continue; } process(x); }");
+
+        var forEach = (Statement.ForEach) block.statements().getFirst();
+        assertEquals(2, forEach.body().statements().size());
+        var ifStmt = (Statement.If) forEach.body().statements().getFirst();
+        assertInstanceOf(Statement.Continue.class, ifStmt.thenBlock().statements().getFirst());
+    }
+
+    // endregion
+
     // region Error cases
 
     @Test
@@ -568,6 +797,246 @@ public class StatementParserTests {
     public void testVarMissingName() {
         assertThrows(CompileError.class, () ->
             parseBlock("var : i32;"));
+    }
+
+    @Test
+    public void testMissingSemicolonOnBreak() {
+        assertThrows(CompileError.class, () ->
+            parseBlock("break"));
+    }
+
+    @Test
+    public void testMissingSemicolonOnContinue() {
+        assertThrows(CompileError.class, () ->
+            parseBlock("continue"));
+    }
+
+    @Test
+    public void testForMissingOpenParen() {
+        assertThrows(CompileError.class, () ->
+            parseBlock("for var i: i32 = 0; i < 10; i = i + 1) { }"));
+    }
+
+    @Test
+    public void testForMissingCloseParen() {
+        assertThrows(CompileError.class, () ->
+            parseBlock("for (var i: i32 = 0; i < 10; i = i + 1 { }"));
+    }
+
+    @Test
+    public void testForMissingSemicolonAfterInit() {
+        assertThrows(CompileError.class, () ->
+            parseBlock("for (var i: i32 = 0 i < 10; i = i + 1) { }"));
+    }
+
+    @Test
+    public void testForEachMissingCloseParen() {
+        assertThrows(CompileError.class, () ->
+            parseBlock("for (x in items { }"));
+    }
+
+    // endregion
+
+    // region Compound Assignment
+
+    @Test
+    public void testPlusAssign() throws IOException {
+        var block = parseBlock("x += 5;");
+
+        assertEquals(1, block.statements().size());
+        var assign = (Statement.Assignment) block.statements().getFirst();
+        assertInstanceOf(Expression.Identifier.class, assign.target());
+        assertEquals("x", ((Expression.Identifier) assign.target()).name().lexeme());
+        assertEquals("+=", assign.operator().lexeme());
+        assertInstanceOf(Expression.Literal.class, assign.value());
+    }
+
+    @Test
+    public void testMinusAssign() throws IOException {
+        var block = parseBlock("x -= 1;");
+
+        var assign = (Statement.Assignment) block.statements().getFirst();
+        assertEquals("-=", assign.operator().lexeme());
+    }
+
+    @Test
+    public void testStarAssign() throws IOException {
+        var block = parseBlock("x *= 2;");
+
+        var assign = (Statement.Assignment) block.statements().getFirst();
+        assertEquals("*=", assign.operator().lexeme());
+    }
+
+    @Test
+    public void testSlashAssign() throws IOException {
+        var block = parseBlock("x /= 4;");
+
+        var assign = (Statement.Assignment) block.statements().getFirst();
+        assertEquals("/=", assign.operator().lexeme());
+    }
+
+    @Test
+    public void testPercentAssign() throws IOException {
+        var block = parseBlock("x %= 3;");
+
+        var assign = (Statement.Assignment) block.statements().getFirst();
+        assertEquals("%=", assign.operator().lexeme());
+    }
+
+    @Test
+    public void testCompoundAssignToMemberAccess() throws IOException {
+        var block = parseBlock("obj.field += 10;");
+
+        var assign = (Statement.Assignment) block.statements().getFirst();
+        assertInstanceOf(Expression.MemberAccess.class, assign.target());
+        assertEquals("+=", assign.operator().lexeme());
+    }
+
+    @Test
+    public void testCompoundAssignToArrayIndex() throws IOException {
+        var block = parseBlock("arr[0] *= 2;");
+
+        var assign = (Statement.Assignment) block.statements().getFirst();
+        assertInstanceOf(Expression.Index.class, assign.target());
+        assertEquals("*=", assign.operator().lexeme());
+    }
+
+    @Test
+    public void testCompoundAssignWithExpression() throws IOException {
+        var block = parseBlock("x += a + b;");
+
+        var assign = (Statement.Assignment) block.statements().getFirst();
+        assertEquals("+=", assign.operator().lexeme());
+        assertInstanceOf(Expression.Binary.class, assign.value());
+    }
+
+    // endregion
+
+    // region Increment / Decrement
+
+    @Test
+    public void testPostfixIncrement() throws IOException {
+        var block = parseBlock("x++;");
+
+        assertEquals(1, block.statements().size());
+        var inc = (Statement.IncrementDecrement) block.statements().getFirst();
+        assertInstanceOf(Expression.Identifier.class, inc.target());
+        assertEquals("x", ((Expression.Identifier) inc.target()).name().lexeme());
+        assertEquals("++", inc.operator().lexeme());
+        assertFalse(inc.prefix());
+    }
+
+    @Test
+    public void testPostfixDecrement() throws IOException {
+        var block = parseBlock("x--;");
+
+        var inc = (Statement.IncrementDecrement) block.statements().getFirst();
+        assertEquals("x", ((Expression.Identifier) inc.target()).name().lexeme());
+        assertEquals("--", inc.operator().lexeme());
+        assertFalse(inc.prefix());
+    }
+
+    @Test
+    public void testPrefixIncrement() throws IOException {
+        var block = parseBlock("++x;");
+
+        var inc = (Statement.IncrementDecrement) block.statements().getFirst();
+        assertEquals("x", ((Expression.Identifier) inc.target()).name().lexeme());
+        assertEquals("++", inc.operator().lexeme());
+        assertTrue(inc.prefix());
+    }
+
+    @Test
+    public void testPrefixDecrement() throws IOException {
+        var block = parseBlock("--x;");
+
+        var inc = (Statement.IncrementDecrement) block.statements().getFirst();
+        assertEquals("x", ((Expression.Identifier) inc.target()).name().lexeme());
+        assertEquals("--", inc.operator().lexeme());
+        assertTrue(inc.prefix());
+    }
+
+    @Test
+    public void testPostfixIncrementOnMemberAccess() throws IOException {
+        var block = parseBlock("obj.count++;");
+
+        var inc = (Statement.IncrementDecrement) block.statements().getFirst();
+        assertInstanceOf(Expression.MemberAccess.class, inc.target());
+        assertFalse(inc.prefix());
+    }
+
+    @Test
+    public void testPrefixDecrementOnArrayIndex() throws IOException {
+        var block = parseBlock("--arr[0];");
+
+        var inc = (Statement.IncrementDecrement) block.statements().getFirst();
+        assertInstanceOf(Expression.Index.class, inc.target());
+        assertTrue(inc.prefix());
+    }
+
+    // endregion
+
+    // region For-loop with compound assignment and increment/decrement steps
+
+    @Test
+    public void testForLoopWithIncrementStep() throws IOException {
+        var block = parseBlock("for (var i: i32 = 0; i < 10; i++) { }");
+
+        var forStmt = (Statement.For) block.statements().getFirst();
+        assertInstanceOf(Statement.VarDeclaration.class, forStmt.init());
+        assertNotNull(forStmt.condition());
+        assertInstanceOf(Statement.IncrementDecrement.class, forStmt.step());
+        var step = (Statement.IncrementDecrement) forStmt.step();
+        assertEquals("i", ((Expression.Identifier) step.target()).name().lexeme());
+        assertFalse(step.prefix());
+    }
+
+    @Test
+    public void testForLoopWithPrefixIncrementStep() throws IOException {
+        var block = parseBlock("for (var i: i32 = 0; i < 10; ++i) { }");
+
+        var forStmt = (Statement.For) block.statements().getFirst();
+        var step = (Statement.IncrementDecrement) forStmt.step();
+        assertEquals("i", ((Expression.Identifier) step.target()).name().lexeme());
+        assertTrue(step.prefix());
+    }
+
+    @Test
+    public void testForLoopWithDecrementStep() throws IOException {
+        var block = parseBlock("for (var i: i32 = 10; i > 0; i--) { }");
+
+        var forStmt = (Statement.For) block.statements().getFirst();
+        var step = (Statement.IncrementDecrement) forStmt.step();
+        assertEquals("--", step.operator().lexeme());
+        assertFalse(step.prefix());
+    }
+
+    @Test
+    public void testForLoopWithCompoundAssignStep() throws IOException {
+        var block = parseBlock("for (var i: i32 = 0; i < 100; i += 10) { }");
+
+        var forStmt = (Statement.For) block.statements().getFirst();
+        assertInstanceOf(Statement.Assignment.class, forStmt.step());
+        var step = (Statement.Assignment) forStmt.step();
+        assertEquals("+=", step.operator().lexeme());
+    }
+
+    @Test
+    public void testForLoopWithCompoundMinusAssignStep() throws IOException {
+        var block = parseBlock("for (var i: i32 = 100; i > 0; i -= 5) { }");
+
+        var forStmt = (Statement.For) block.statements().getFirst();
+        var step = (Statement.Assignment) forStmt.step();
+        assertEquals("-=", step.operator().lexeme());
+    }
+
+    @Test
+    public void testForLoopWithCompoundStarAssignStep() throws IOException {
+        var block = parseBlock("for (var i: i32 = 1; i < 1000; i *= 2) { }");
+
+        var forStmt = (Statement.For) block.statements().getFirst();
+        var step = (Statement.Assignment) forStmt.step();
+        assertEquals("*=", step.operator().lexeme());
     }
 
     // endregion

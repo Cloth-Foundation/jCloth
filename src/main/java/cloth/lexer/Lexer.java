@@ -369,6 +369,10 @@ public final class Lexer {
         return true;
     }
 
+    private boolean matchString(Tokens.Operator operator) {
+        return matchString(operator.toString());
+    }
+
     /**
      * Checks if the specified character is a whitespace character.
      *
@@ -435,7 +439,7 @@ public final class Lexer {
     // TODO: Unicode identifier support (e.g. isIdentStart can include non-ASCII letters, isIdentContinue can include combining marks, etc.)
     // TODO: We can basically make any rules we want for identifiers, as long as the lexer and parser are consistent. For example, we could allow emojis in identifiers if we wanted to. The current rules are just a common baseline.
     private boolean isIdentifierStart(char c) {
-        return isAlpha(c) || c == '$';
+        return isAlpha(c) || c == Tokens.Operator.Dollar.toChar();
     }
 
     /**
@@ -448,7 +452,7 @@ public final class Lexer {
      *         otherwise false
      */
     private boolean isIdentifierContinue(char c) {
-        return isAlpha(c) || isDigit(c) || c == '$';
+        return isAlpha(c) || isDigit(c) || c == Tokens.Operator.Dollar.toChar();
     }
 
     /**
@@ -479,11 +483,11 @@ public final class Lexer {
             }
 
             // Comments
-            if (c == '/' && (lookaheadChar(1) == '/' || lookaheadChar(1) == '*')) {
+            if (c == Tokens.Operator.Slash.toChar() && (lookaheadChar(1) == Tokens.Operator.Slash.toChar() || lookaheadChar(1) == Tokens.Operator.Star.toChar())) {
                 if (getOptions().isEmitComments()) break;
 
                 beginToken();
-                if (lookaheadChar(1) == '/') consumeLineComment();
+                if (lookaheadChar(1) == Tokens.Operator.Slash.toChar()) consumeLineComment();
                 else consumeBlockComment();
 
                 if (getOptions().isKeepTrivia()) {
@@ -520,7 +524,7 @@ public final class Lexer {
                 continue;
             }
 
-            if (c == '/' && lookaheadChar(1) == '/') {
+            if (c == Tokens.Operator.Slash.toChar() && lookaheadChar(1) == Tokens.Operator.Slash.toChar()) {
                 beginToken();
                 consumeLineComment();
                 TriviaPiece tr = new TriviaPiece(TokenKind.Comment, endTokenSpan(), tokenLexeme());
@@ -734,7 +738,7 @@ public final class Lexer {
             advance();
         }
 
-        if (current() == '.' && isDigit(lookaheadChar(1))) {
+        if (current() == Tokens.Operator.Dot.toChar() && isDigit(lookaheadChar(1))) {
             advance();
             while (!atEnd()) {
                 char c = current();
@@ -824,7 +828,7 @@ public final class Lexer {
      * <p>
      * The method differentiates between a single-line comment (//), block comment (/* */
     private IToken scanCommentOrSlashOperator() {
-        if (lookaheadChar(1) == '/') {
+        if (lookaheadChar(1) == Tokens.Operator.Slash.toChar()) {
             if (options.isEmitComments()) {
                 beginToken();
                 consumeLineComment();
@@ -836,7 +840,7 @@ public final class Lexer {
             return lexOne().token();
         }
 
-        if (lookaheadChar(1) == '*') {
+        if (lookaheadChar(1) == Tokens.Operator.Star.toChar()) {
             if (options.isEmitComments()) {
                 beginToken();
                 consumeBlockComment();
@@ -850,6 +854,10 @@ public final class Lexer {
 
         beginToken();
         advance();
+        if (lookaheadChar(0) == Tokens.Operator.Assign.toChar()) {
+            advance();
+            return makeToken(TokenKind.Operator, Tokens.Operator.SlashAssign);
+        }
         return makeToken(TokenKind.Operator, Tokens.Operator.Slash);
     }
 
@@ -864,50 +872,50 @@ public final class Lexer {
     private IToken scanOperatorOrPunctuation() {
         beginToken();
 
-        if (matchString("...")) {
+        if (matchString(Tokens.Operator.DotDotDot)) {
             return makeToken(TokenKind.Operator, Tokens.Operator.DotDotDot);
         }
 
-        if (matchString("++")) {
+        if (matchString(Tokens.Operator.PlusPlus)) {
             return makeToken(TokenKind.Operator, Tokens.Operator.PlusPlus);
         }
-        if (matchString("--")) {
+        if (matchString(Tokens.Operator.MinusMinus)) {
             return makeToken(TokenKind.Operator, Tokens.Operator.MinusMinus);
         }
-        if (matchString("==")) {
+        if (matchString(Tokens.Operator.Equal)) {
             return makeToken(TokenKind.Operator, Tokens.Operator.Equal);
         }
-        if (matchString("!=")) {
+        if (matchString(Tokens.Operator.NotEqual)) {
             return makeToken(TokenKind.Operator, Tokens.Operator.NotEqual);
         }
-        if (matchString("<=")) {
+        if (matchString(Tokens.Operator.LessEqual)) {
             return makeToken(TokenKind.Operator, Tokens.Operator.LessEqual);
         }
-        if (matchString(">=")) {
+        if (matchString(Tokens.Operator.GreaterEqual)) {
             return makeToken(TokenKind.Operator, Tokens.Operator.GreaterEqual);
         }
-        if (matchString("->")) {
+        if (matchString(Tokens.Operator.Arrow)) {
             return makeToken(TokenKind.Operator, Tokens.Operator.Arrow);
         }
-        if (matchString("+=")) {
+        if (matchString(Tokens.Operator.PlusAssign)) {
             return makeToken(TokenKind.Operator, Tokens.Operator.PlusAssign);
         }
-        if (matchString("-=")) {
+        if (matchString(Tokens.Operator.MinusAssign)) {
             return makeToken(TokenKind.Operator, Tokens.Operator.MinusAssign);
         }
-        if (matchString("*=")) {
+        if (matchString(Tokens.Operator.StarAssign)) {
             return makeToken(TokenKind.Operator, Tokens.Operator.StarAssign);
         }
-        if (matchString("/=")) {
+        if (matchString(Tokens.Operator.SlashAssign)) {
             return makeToken(TokenKind.Operator, Tokens.Operator.SlashAssign);
         }
-        if (matchString("%=")) {
+        if (matchString(Tokens.Operator.PercentAssign)) {
             return makeToken(TokenKind.Operator, Tokens.Operator.PercentAssign);
         }
-        if (matchString("::")) {
+        if (matchString(Tokens.Operator.ColonColon)) {
             return makeToken(TokenKind.Operator, Tokens.Operator.ColonColon);
         }
-        if (matchString("..")) {
+        if (matchString(Tokens.Operator.DotDot)) {
             return makeToken(TokenKind.Operator, Tokens.Operator.DotDot);
         }
 

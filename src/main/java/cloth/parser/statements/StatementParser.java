@@ -87,8 +87,20 @@ public class StatementParser extends ParserPart<Statement.Block> {
         if (is(Tokens.Keyword.While)) {
             return parseWhile();
         }
+        if (is(Tokens.Keyword.For)) {
+            return parseFor();
+        }
+        if (is(Tokens.Keyword.Break)) {
+            return parseBreak();
+        }
+        if (is(Tokens.Keyword.Continue)) {
+            return parseContinue();
+        }
         if (is(Tokens.Keyword.Delete)) {
             return parseDelete();
+        }
+        if (is(Tokens.Operator.PlusPlus) || is(Tokens.Operator.MinusMinus)) {
+            return parsePrefixIncrementDecrement();
         }
         if (is(Tokens.Operator.LeftBrace)) {
             return parseNestedBlock();
@@ -262,6 +274,228 @@ public class StatementParser extends ParserPart<Statement.Block> {
 
     // endregion
 
+    // region For
+
+    /**
+     * Parses either a C-style for loop or a foreach loop.
+     * Disambiguates by looking for {@code <name> in} after the opening paren.
+     */
+    @SneakyThrows
+    private Statement parseFor() {
+        IToken keyword = advance(); // consume 'for'
+
+        expect(Tokens.Operator.LeftParen, () ->
+            new CompileError("Expected '('", peek().span(),
+                "Expected opening parenthesis for 'for' loop header.",
+                "for (var i: i32 = 0; i < 10; i = i + 1) { }"));
+
+        if (isForEachHeader()) {
+            return parseForEach(keyword);
+        }
+
+        return parseCStyleFor(keyword);
+    }
+
+    /**
+     * Peeks ahead to decide if the for-header is a foreach ({@code <ident> in ...}).
+     */
+    private boolean isForEachHeader() {
+        return is(TokenKind.Identifier) && peek(1).is(TokenKind.Keyword)
+            && ((cloth.token.Token) peek(1)).keyword() == Tokens.Keyword.In;
+    }
+
+    @SneakyThrows
+    private Statement.ForEach parseForEach(IToken keyword) {
+        IToken name = advance(); // consume identifier
+        advance(); // consume 'in'
+
+        Expression iterable = new ExpressionParser(getLexer(), getFile()).parse();
+
+        expect(Tokens.Operator.RightParen, () ->
+            new CompileError("Expected ')'", peek().span(),
+                "Expected closing parenthesis for foreach header.",
+                "for (x in array) { }"));
+
+        expect(Tokens.Operator.LeftBrace, () ->
+            new CompileError("Expected '{'", peek().span(),
+                "Expected opening brace for foreach body.",
+                "for (x in array) { }"));
+
+        Statement.Block body = parseBlock();
+
+        IToken closeBrace = expect(Tokens.Operator.RightBrace, () ->
+            new CompileError("Expected '}'", peek().span(),
+                "Expected closing brace for foreach body.",
+                "for (x in array) { }"));
+
+        return new Statement.ForEach(name, iterable, body,
+            new SourceSpan(keyword.span().start(), closeBrace.span().end()));
+    }
+
+    @SneakyThrows
+    private Statement.For parseCStyleFor(IToken keyword) {
+        @Nullable Statement init = null;
+        if (!is(Tokens.Operator.Semicolon)) {
+            init = parseForInit();
+        }
+        expect(Tokens.Operator.Semicolon, () ->
+            new CompileError("Expected ';'", peek().span(),
+                "Expected semicolon after for-loop initializer.",
+                "for (var i: i32 = 0; i < 10; i = i + 1) { }"));
+
+        @Nullable Expression condition = null;
+        if (!is(Tokens.Operator.Semicolon)) {
+            condition = new ExpressionParser(getLexer(), getFile()).parse();
+        }
+        expect(Tokens.Operator.Semicolon, () ->
+            new CompileError("Expected ';'", peek().span(),
+                "Expected semicolon after for-loop condition.",
+                "for (var i: i32 = 0; i < 10; i = i + 1) { }"));
+
+        @Nullable Statement step = null;
+        if (!is(Tokens.Operator.RightParen)) {
+            step = parseForStep();
+        }
+        expect(Tokens.Operator.RightParen, () ->
+            new CompileError("Expected ')'", peek().span(),
+                "Expected closing parenthesis for for-loop header.",
+                "for (var i: i32 = 0; i < 10; i = i + 1) { }"));
+
+        expect(Tokens.Operator.LeftBrace, () ->
+            new CompileError("Expected '{'", peek().span(),
+                "Expected opening brace for for-loop body.",
+                "for (...) { }"));
+
+        Statement.Block body = parseBlock();
+
+        IToken closeBrace = expect(Tokens.Operator.RightBrace, () ->
+            new CompileError("Expected '}'", peek().span(),
+                "Expected closing brace for for-loop body.",
+                "for (...) { }"));
+
+        return new Statement.For(init, condition, step, body,
+            new SourceSpan(keyword.span().start(), closeBrace.span().end()));
+    }
+
+    /**
+     * Parses the init clause of a C-style for loop.
+     * Either a var/let/const declaration (without trailing semicolon)
+     * or an assignment / increment-decrement.
+     */
+    @SneakyThrows
+    private Statement parseForInit() {
+        if (is(Tokens.Keyword.Var) || is(Tokens.Keyword.Let) || is(Tokens.Keyword.Const)) {
+            return parseForVarDeclaration();
+        }
+        return parseForAssignmentOrIncrement();
+    }
+
+    /**
+     * Parses a var/let/const declaration inside a for-init without consuming the trailing semicolon.
+     */
+    @SneakyThrows
+    private Statement.VarDeclaration parseForVarDeclaration() {
+        FieldParser.BindingKind binding;
+        IToken bindingToken;
+        if (is(Tokens.Keyword.Var)) {
+            binding = FieldParser.BindingKind.VAR;
+            bindingToken = advance();
+        } else if (is(Tokens.Keyword.Let)) {
+            binding = FieldParser.BindingKind.LET;
+            bindingToken = advance();
+        } else {
+            binding = FieldParser.BindingKind.CONST;
+            bindingToken = advance();
+        }
+
+        IToken name = expect(TokenKind.Identifier, () ->
+            new CompileError("Expected variable name", peek().span(),
+                "Expected an identifier for the variable name.",
+                "var i: i32 = 0"));
+
+        expect(Tokens.Operator.Colon, () ->
+            new CompileError("Expected ':'", peek().span(),
+                "Expected ':' between variable name and type.",
+                "var i: i32 = 0"));
+
+        TypeReferenceParser.TypeReference type =
+            new TypeReferenceParser(getLexer(), getFile()).parse();
+
+        Expression initializer = null;
+        if (is(Tokens.Operator.Assign)) {
+            advance();
+            initializer = new ExpressionParser(getLexer(), getFile()).parse();
+        }
+
+        SourceSpan span = new SourceSpan(
+            bindingToken.span().start(),
+            initializer != null ? initializer.span().end() : type.span().end()
+        );
+
+        return new Statement.VarDeclaration(binding, bindingToken, name, type, initializer, span);
+    }
+
+    /**
+     * Parses an assignment ({@code target = expr} or compound {@code target += expr})
+     * without consuming a trailing semicolon. Used for for-init and for-step.
+     */
+    @SneakyThrows
+    private Statement parseForAssignmentOrIncrement() {
+        if (is(Tokens.Operator.PlusPlus) || is(Tokens.Operator.MinusMinus)) {
+            IToken op = advance();
+            Expression target = new ExpressionParser(getLexer(), getFile()).parse();
+            return new Statement.IncrementDecrement(target, op, true,
+                new SourceSpan(op.span().start(), target.span().end()));
+        }
+
+        Expression target = new ExpressionParser(getLexer(), getFile()).parse();
+
+        if (is(Tokens.Operator.PlusPlus) || is(Tokens.Operator.MinusMinus)) {
+            IToken op = advance();
+            return new Statement.IncrementDecrement(target, op, false,
+                new SourceSpan(target.span().start(), op.span().end()));
+        }
+
+        if (!isAssignmentOperator()) {
+            throw new CompileError("Expected assignment operator", peek().span(),
+                "For-loop header requires a variable declaration, assignment, or increment/decrement.",
+                "i = i + 1");
+        }
+
+        IToken op = advance();
+        Expression value = new ExpressionParser(getLexer(), getFile()).parse();
+
+        return new Statement.Assignment(target, op, value,
+            new SourceSpan(target.span().start(), value.span().end()));
+    }
+
+    @SneakyThrows
+    private Statement parseForStep() {
+        return parseForAssignmentOrIncrement();
+    }
+
+    // endregion
+
+    // region Break / Continue
+
+    @SneakyThrows
+    private Statement.Break parseBreak() {
+        IToken keyword = advance(); // consume 'break'
+        IToken semi = expectSemiColon();
+        return new Statement.Break(keyword,
+            new SourceSpan(keyword.span().start(), semi.span().end()));
+    }
+
+    @SneakyThrows
+    private Statement.Continue parseContinue() {
+        IToken keyword = advance(); // consume 'continue'
+        IToken semi = expectSemiColon();
+        return new Statement.Continue(keyword,
+            new SourceSpan(keyword.span().start(), semi.span().end()));
+    }
+
+    // endregion
+
     // region Delete
 
     @SneakyThrows
@@ -296,17 +530,46 @@ public class StatementParser extends ParserPart<Statement.Block> {
 
     // endregion
 
+    // region Increment / Decrement
+
+    @SneakyThrows
+    private Statement.IncrementDecrement parsePrefixIncrementDecrement() {
+        IToken op = advance(); // consume ++ or --
+        Expression target = new ExpressionParser(getLexer(), getFile()).parse();
+        IToken semi = expectSemiColon();
+        return new Statement.IncrementDecrement(target, op, true,
+            new SourceSpan(op.span().start(), semi.span().end()));
+    }
+
+    // endregion
+
     // region Expression or assignment
+
+    private boolean isAssignmentOperator() {
+        return is(Tokens.Operator.Assign)
+            || is(Tokens.Operator.PlusAssign)
+            || is(Tokens.Operator.MinusAssign)
+            || is(Tokens.Operator.StarAssign)
+            || is(Tokens.Operator.SlashAssign)
+            || is(Tokens.Operator.PercentAssign);
+    }
 
     @SneakyThrows
     private Statement parseExpressionOrAssignment() {
         Expression expr = new ExpressionParser(getLexer(), getFile()).parse();
 
-        if (is(Tokens.Operator.Assign)) {
+        if (isAssignmentOperator()) {
             IToken op = advance();
             Expression value = new ExpressionParser(getLexer(), getFile()).parse();
             IToken semi = expectSemiColon();
             return new Statement.Assignment(expr, op, value,
+                new SourceSpan(expr.span().start(), semi.span().end()));
+        }
+
+        if (is(Tokens.Operator.PlusPlus) || is(Tokens.Operator.MinusMinus)) {
+            IToken op = advance();
+            IToken semi = expectSemiColon();
+            return new Statement.IncrementDecrement(expr, op, false,
                 new SourceSpan(expr.span().start(), semi.span().end()));
         }
 

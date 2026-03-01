@@ -194,6 +194,11 @@ public class Tokens {
         public String toString() {
             return symbol;
         }
+
+        public char toChar() {
+            return symbol.charAt(0);
+        }
+
     }
 
 }

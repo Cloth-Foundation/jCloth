@@ -2465,29 +2465,49 @@ if (x = 5) { }  // error
 
 ---
 
-### 8.6 Compound Assignment (TBD)
+### 8.6 Compound Assignment and Increment / Decrement
 
-Cloth may support compound assignment operators:
+#### 8.6.1 Compound Assignment
 
-* `+=`, `-=`, `*=`, `/=`, `%=` (TBD)
+Cloth supports compound assignment operators:
 
-If supported, they MUST be equivalent to:
+* `+=`, `-=`, `*=`, `/=`, `%=`
+
+These are statement-level constructs (not expressions), just like plain assignment.
+
+A compound assignment `target <op>= value;` is semantically equivalent to `target = target <op> value;` with the guarantee that the target expression is evaluated **exactly once**.
 
 ```cloth
-x += y;
+x += y;   // equivalent to: x = x + y;
+x -= 1;   // equivalent to: x = x - 1;
+x *= 2;   // equivalent to: x = x * 2;
+x /= 4;   // equivalent to: x = x / 4;
+x %= 3;   // equivalent to: x = x % 3;
 ```
+
+Rules:
+
+* The target MUST be a valid assignment target (see §8.5).
+* Numeric conversions follow the same rules as the corresponding binary operator.
+* Overflow behavior follows the same rules as the expanded form.
+
+#### 8.6.2 Increment / Decrement
+
+Cloth supports `++` and `--` as statement-level operations:
 
 ```cloth
-x = x + y;
+x++;   // equivalent to: x = x + 1;
+++x;   // equivalent to: x = x + 1;
+x--;   // equivalent to: x = x - 1;
+--x;   // equivalent to: x = x - 1;
 ```
 
-Subject to evaluation-order guarantees.
+Both prefix and postfix forms are allowed. Because increment/decrement is a statement (not an expression), the prefix/postfix distinction has **no semantic difference** — the value of the expression is discarded.
 
-If compound assignment is introduced, the language MUST specify:
+Rules:
 
-* whether the target expression is evaluated once or multiple times,
-* how numeric conversions are applied,
-* whether overflow behavior differs from the expanded form.
+* The target MUST be a valid assignment target (see §8.5).
+* The target MUST have a numeric type that supports `+` / `-` with integer `1`.
 
 ---
 
@@ -2626,9 +2646,9 @@ for ( <init>? ; <condition>? ; <step>? ) <block>
 
 Where:
 
-* `<init>` is either a variable declaration (without a trailing `;`) or an assignment header (a `<target> = <expr>` form without a trailing `;`).
+* `<init>` is either a variable declaration (without a trailing `;`), an assignment / compound assignment header, or an increment/decrement (all without a trailing `;`).
 * `<condition>` is an expression.
-* `<step>` is an assignment header (a `<target> = <expr>` form without a trailing `;`).
+* `<step>` is an assignment / compound assignment header, or an increment/decrement (all without a trailing `;`).
 
 Rules:
 
