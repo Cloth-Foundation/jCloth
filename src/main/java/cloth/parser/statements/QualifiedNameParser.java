@@ -1,6 +1,6 @@
 package cloth.parser.statements;
 
-import cloth.error.errors.CompileError;
+import cloth.error.CommonErrors;
 import cloth.file.SourceFile;
 import cloth.lexer.Lexer;
 import cloth.parser.ParserPart;
@@ -74,7 +74,7 @@ public class QualifiedNameParser extends ParserPart<QualifiedNameParser.Qualifie
         if (is(TokenKind.Identifier) || is(TokenKind.Keyword)) {
             first = advance();
         } else {
-            throw new CompileError("Expected identifier", peek().span(), "Expected an identifier for the qualified name.", "A qualified name is a dot-separated sequence of identifiers.");
+            throw CommonErrors.EXPECTED_IDENTIFIER.toError(peek().span(), "Expected an identifier for the qualified name.");
         }
 
         var parts = new ArrayList<IToken>();
@@ -85,7 +85,7 @@ public class QualifiedNameParser extends ParserPart<QualifiedNameParser.Qualifie
             if (is(TokenKind.Identifier) || is(TokenKind.Keyword)) {
                 part = advance();
             } else {
-                throw new CompileError("Expected identifier", peek().span(), "Expected an identifier after '.'.", "A qualified name is a dot-separated sequence of identifiers.");
+                throw CommonErrors.EXPECTED_IDENTIFIER.toError(peek().span(), "Expected an identifier after '.'.");
             }
             parts.add(part);
         }

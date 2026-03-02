@@ -1,6 +1,7 @@
 package cloth.parser.statements;
 
-import cloth.error.errors.CompileError;
+import cloth.error.CommonErrors;
+import cloth.error.errors.ModifierError;
 import cloth.file.SourceFile;
 import cloth.lexer.Lexer;
 import cloth.parser.ParserPart;
@@ -47,7 +48,7 @@ public class StructParser extends ParserPart<StructParser.StructDeclaration> {
         DeclarationFlags flags = parseDeclarationFlags();
 
         if (flags.isAbstract()) {
-            throw new CompileError(
+            throw new ModifierError(
                 "Structs cannot be abstract",
                 flags.getAbstractToken().span(),
                 "Remove the 'abstract' modifier.",
@@ -55,7 +56,7 @@ public class StructParser extends ParserPart<StructParser.StructDeclaration> {
             );
         }
         if (flags.isOverride()) {
-            throw new CompileError(
+            throw new ModifierError(
                 "'override' is not valid on a struct",
                 flags.getOverrideToken().span(),
                 "Remove the 'override' modifier.",
@@ -63,34 +64,22 @@ public class StructParser extends ParserPart<StructParser.StructDeclaration> {
             );
         }
 
-        IToken structKeyword = expect(Tokens.Keyword.Struct, () ->
-            new CompileError("Expected 'struct'", peek().span(),
-                "Expected a struct declaration.",
-                "Struct declarations begin with the 'struct' keyword."));
+        IToken structKeyword = expect(Tokens.Keyword.Struct, CommonErrors.EXPECTED_KEYWORD_STRUCT);
 
-        IToken name = expect(TokenKind.Identifier, () ->
-            new CompileError("Expected struct name", peek().span(),
-                "A struct name must be a valid identifier.",
-                "struct Vec2(x: f32, y: f32) { }"));
+        IToken name = expect(TokenKind.Identifier, CommonErrors.EXPECTED_IDENTIFIER, "Expected struct name.");
 
         List<ParameterListParser.Parameter> primaryParams = null;
         if (is(Tokens.Operator.LeftParen)) {
             primaryParams = new ParameterListParser(getLexer(), getFile()).parse();
         }
 
-        expect(Tokens.Operator.LeftBrace, () ->
-            new CompileError("Expected '{'", peek().span(),
-                "Expected opening brace for struct body.",
-                "struct Vec2(x: f32, y: f32) { }"));
+        expect(Tokens.Operator.LeftBrace, CommonErrors.EXPECTED_OPEN_BRACE);
 
         var fields = new ArrayList<FieldParser.FieldDeclaration>();
         var methods = new ArrayList<FuncParser.FuncDeclaration>();
         parseStructBody(fields, methods);
 
-        IToken closeBrace = expect(Tokens.Operator.RightBrace, () ->
-            new CompileError("Expected '}'", peek().span(),
-                "Expected closing brace for struct body.",
-                "struct Vec2(x: f32, y: f32) { }"));
+        IToken closeBrace = expect(Tokens.Operator.RightBrace, CommonErrors.EXPECTED_CLOSE_BRACE);
 
         IToken firstFlag = flags.firstToken();
         SourceSpan span = new SourceSpan(

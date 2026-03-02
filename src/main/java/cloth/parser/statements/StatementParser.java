@@ -1,6 +1,8 @@
 package cloth.parser.statements;
 
-import cloth.error.errors.CompileError;
+import cloth.error.CommonErrors;
+import cloth.error.errors.DeclarationError;
+import cloth.error.errors.SyntaxError;
 import cloth.file.SourceFile;
 import cloth.lexer.Lexer;
 import cloth.parser.ParserPart;
@@ -42,9 +44,9 @@ public class StatementParser extends ParserPart<Statement.Block> {
     @Override
     @SneakyThrows
     public Statement.Block parse() {
-        expect(Tokens.Operator.LeftBrace, () -> new CompileError("Expected '{'", peek().span(), "Expected opening brace for block.", "{ stmt; }"));
+        expect(Tokens.Operator.LeftBrace, CommonErrors.EXPECTED_OPEN_BRACE);
         Statement.Block block = parseBlock();
-        expect(Tokens.Operator.RightBrace, () -> new CompileError("Expected '}'", peek().span(), "Expected closing brace for block.", "{ stmt; }"));
+        expect(Tokens.Operator.RightBrace, CommonErrors.EXPECTED_CLOSE_BRACE);
 
         return block;
     }
@@ -149,8 +151,8 @@ public class StatementParser extends ParserPart<Statement.Block> {
             bindingToken = advance();
         }
 
-        IToken name = expect(TokenKind.Identifier, () -> new CompileError("Expected variable name", peek().span(), "Expected an identifier for the variable name.", "var x: i32 = 0;"));
-        expect(Tokens.Operator.Colon, () -> new CompileError("Expected ':'", peek().span(), "Expected ':' between variable name and type.", "var x: i32;"));
+        IToken name = expect(TokenKind.Identifier, CommonErrors.EXPECTED_IDENTIFIER, "Expected variable name.");
+        expect(Tokens.Operator.Colon, CommonErrors.EXPECTED_COLON, "Expected ':' between variable name and type.");
 
         TypeReferenceParser.TypeReference type = new TypeReferenceParser(getLexer(), getFile()).parse();
         Expression initializer = null;
@@ -208,11 +210,11 @@ public class StatementParser extends ParserPart<Statement.Block> {
 
         if (hasParentheses) advance();
         Expression condition = new ExpressionParser(getLexer(), getFile()).parse();
-        if (hasParentheses) expect(Tokens.Operator.RightParen, () -> new CompileError("Expected ')'", peek().span(), "Expected closing parenthesis for if condition.", "if (condition) { }"));
+        if (hasParentheses) expect(Tokens.Operator.RightParen, CommonErrors.EXPECTED_CLOSE_PAREN);
 
-        expect(Tokens.Operator.LeftBrace, () -> new CompileError("Expected '{'", peek().span(), "Expected opening brace for if body.", "if condition { }"));
+        expect(Tokens.Operator.LeftBrace, CommonErrors.EXPECTED_OPEN_BRACE);
         Statement.Block thenBlock = parseBlock();
-        IToken thenClose = expect(Tokens.Operator.RightBrace, () -> new CompileError("Expected '}'", peek().span(), "Expected closing brace for if body.", "if condition { }"));
+        IToken thenClose = expect(Tokens.Operator.RightBrace, CommonErrors.EXPECTED_CLOSE_BRACE);
 
         @Nullable Statement elseBlock = null;
         if (is(Tokens.Keyword.Else)) {
@@ -220,9 +222,9 @@ public class StatementParser extends ParserPart<Statement.Block> {
             if (is(Tokens.Keyword.If)) {
                 elseBlock = parseIf();
             } else {
-                expect(Tokens.Operator.LeftBrace, () -> new CompileError("Expected '{' or 'if'", peek().span(), "Expected opening brace for else body, or 'if' for else-if chain.", "else { }"));
+                expect(Tokens.Operator.LeftBrace, CommonErrors.EXPECTED_OPEN_BRACE, "Expected '{' or 'if' for else-if chain.");
                 Statement.Block elseBody = parseBlock();
-                IToken elseClose = expect(Tokens.Operator.RightBrace, () -> new CompileError("Expected '}'", peek().span(), "Expected closing brace for else body.", "else { }"));
+                IToken elseClose = expect(Tokens.Operator.RightBrace, CommonErrors.EXPECTED_CLOSE_BRACE);
                 elseBlock = new Statement.Block(elseBody.statements(), new SourceSpan(elseBody.span().start(), elseClose.span().end()));
             }
         }
@@ -254,11 +256,11 @@ public class StatementParser extends ParserPart<Statement.Block> {
 
         if (hasParentheses) advance();
         Expression condition = new ExpressionParser(getLexer(), getFile()).parse();
-        if (hasParentheses) expect(Tokens.Operator.RightParen, () -> new CompileError("Expected ')'", peek().span(), "Expected closing parenthesis for while condition.", "while (condition) { }"));
-        expect(Tokens.Operator.LeftBrace, () -> new CompileError("Expected '{'", peek().span(), "Expected opening brace for while body.", "while condition { }"));
+        if (hasParentheses) expect(Tokens.Operator.RightParen, CommonErrors.EXPECTED_CLOSE_PAREN);
+        expect(Tokens.Operator.LeftBrace, CommonErrors.EXPECTED_OPEN_BRACE);
 
         Statement.Block body = parseBlock();
-        IToken closeBrace = expect(Tokens.Operator.RightBrace, () -> new CompileError("Expected '}'", peek().span(), "Expected closing brace for while body.", "while condition { }"));
+        IToken closeBrace = expect(Tokens.Operator.RightBrace, CommonErrors.EXPECTED_CLOSE_BRACE);
         return new Statement.While(condition, body, new SourceSpan(keyword.span().start(), closeBrace.span().end()));
     }
 
@@ -277,7 +279,7 @@ public class StatementParser extends ParserPart<Statement.Block> {
     private Statement parseFor() {
         IToken keyword = advance(); // consume 'for'
 
-        expect(Tokens.Operator.LeftParen, () -> new CompileError("Expected '('", peek().span(), "Expected opening parenthesis for 'for' loop header.", "for (var i: i32 = 0; i < 10; i = i + 1) { }"));
+        expect(Tokens.Operator.LeftParen, CommonErrors.EXPECTED_OPEN_PAREN);
         if (isForEachHeader()) return parseForEach(keyword);
 
         return parseCStyleFor(keyword);
@@ -290,7 +292,7 @@ public class StatementParser extends ParserPart<Statement.Block> {
      *         false otherwise.
      */
     private boolean isForEachHeader() {
-        return is(TokenKind.Identifier) && peek(1).is(TokenKind.Keyword) && ((cloth.token.Token) peek(1)).keyword() == Tokens.Keyword.In;
+        return is(TokenKind.Identifier) && peek(1).is(TokenKind.Keyword) && ((Token) peek(1)).keyword() == Tokens.Keyword.In;
     }
 
     /**
@@ -309,11 +311,11 @@ public class StatementParser extends ParserPart<Statement.Block> {
         advance(); // consume 'in'
 
         Expression iterable = new ExpressionParser(getLexer(), getFile()).parse();
-        expect(Tokens.Operator.RightParen, () -> new CompileError("Expected ')'", peek().span(), "Expected closing parenthesis for foreach header.", "for (x in array) { }"));
-        expect(Tokens.Operator.LeftBrace, () -> new CompileError("Expected '{'", peek().span(), "Expected opening brace for foreach body.", "for (x in array) { }"));
+        expect(Tokens.Operator.RightParen, CommonErrors.EXPECTED_CLOSE_PAREN);
+        expect(Tokens.Operator.LeftBrace, CommonErrors.EXPECTED_OPEN_BRACE);
 
         Statement.Block body = parseBlock();
-        IToken closeBrace = expect(Tokens.Operator.RightBrace, () -> new CompileError("Expected '}'", peek().span(), "Expected closing brace for foreach body.", "for (x in array) { }"));
+        IToken closeBrace = expect(Tokens.Operator.RightBrace, CommonErrors.EXPECTED_CLOSE_BRACE);
 
         return new Statement.ForEach(name, iterable, body, new SourceSpan(keyword.span().start(), closeBrace.span().end()));
     }
@@ -337,19 +339,19 @@ public class StatementParser extends ParserPart<Statement.Block> {
         @Nullable Statement init = null;
         if (!is(Tokens.Operator.Semicolon)) init = parseForInit();
 
-        expect(Tokens.Operator.Semicolon, () -> new CompileError("Expected ';'", peek().span(), "Expected semicolon after for-loop initializer.", "for (var i: i32 = 0; i < 10; i = i + 1) { }"));
+        expect(Tokens.Operator.Semicolon, CommonErrors.EXPECTED_SEMICOLON, "Expected ';' after for-loop initializer.");
 
         @Nullable Expression condition = null;
         if (!is(Tokens.Operator.Semicolon)) condition = new ExpressionParser(getLexer(), getFile()).parse();
-        expect(Tokens.Operator.Semicolon, () -> new CompileError("Expected ';'", peek().span(), "Expected semicolon after for-loop condition.", "for (var i: i32 = 0; i < 10; i = i + 1) { }"));
+        expect(Tokens.Operator.Semicolon, CommonErrors.EXPECTED_SEMICOLON, "Expected ';' after for-loop condition.");
 
         @Nullable Statement step = null;
         if (!is(Tokens.Operator.RightParen)) step = parseForStep();
 
-        expect(Tokens.Operator.RightParen, () -> new CompileError("Expected ')'", peek().span(), "Expected closing parenthesis for for-loop header.", "for (var i: i32 = 0; i < 10; i = i + 1) { }"));
-        expect(Tokens.Operator.LeftBrace, () -> new CompileError("Expected '{'", peek().span(), "Expected opening brace for for-loop body.", "for (...) { }"));
+        expect(Tokens.Operator.RightParen, CommonErrors.EXPECTED_CLOSE_PAREN);
+        expect(Tokens.Operator.LeftBrace, CommonErrors.EXPECTED_OPEN_BRACE);
         Statement.Block body = parseBlock();
-        IToken closeBrace = expect(Tokens.Operator.RightBrace, () -> new CompileError("Expected '}'", peek().span(), "Expected closing brace for for-loop body.", "for (...) { }"));
+        IToken closeBrace = expect(Tokens.Operator.RightBrace, CommonErrors.EXPECTED_CLOSE_BRACE);
 
         return new Statement.For(init, condition, step, body, new SourceSpan(keyword.span().start(), closeBrace.span().end()));
     }
@@ -405,8 +407,8 @@ public class StatementParser extends ParserPart<Statement.Block> {
             bindingToken = advance();
         }
 
-        IToken name = expect(TokenKind.Identifier, () -> new CompileError("Expected variable name", peek().span(), "Expected an identifier for the variable name.", "var i: i32 = 0"));
-        expect(Tokens.Operator.Colon, () -> new CompileError("Expected ':'", peek().span(), "Expected ':' between variable name and type.", "var i: i32 = 0"));
+        IToken name = expect(TokenKind.Identifier, CommonErrors.EXPECTED_IDENTIFIER, "Expected variable name.");
+        expect(Tokens.Operator.Colon, CommonErrors.EXPECTED_COLON, "Expected ':' between variable name and type.");
         TypeReferenceParser.TypeReference type = new TypeReferenceParser(getLexer(), getFile()).parse();
         Expression initializer = null;
         if (is(Tokens.Operator.Assign)) {
@@ -450,7 +452,7 @@ public class StatementParser extends ParserPart<Statement.Block> {
             return new Statement.IncrementDecrement(target, op, false, new SourceSpan(target.span().start(), op.span().end()));
         }
 
-        if (!isAssignmentOperator()) throw new CompileError("Expected assignment operator", peek().span(), "For-loop header requires a variable declaration, assignment, or increment/decrement.", "i = i + 1");
+        if (!isAssignmentOperator()) throw new SyntaxError("Expected assignment operator", peek().span(), "For-loop header requires a variable declaration, assignment, or increment/decrement.", "i = i + 1");
         IToken op = advance();
         Expression value = new ExpressionParser(getLexer(), getFile()).parse();
 
@@ -534,7 +536,7 @@ public class StatementParser extends ParserPart<Statement.Block> {
     private Statement.Defer parseDefer() {
         IToken keyword = advance(); // consume 'defer'
         Expression expr = new ExpressionParser(getLexer(), getFile()).parse();
-        if (!(expr instanceof Expression.Call call))throw new CompileError("Expected call expression after 'defer'", expr.span(), "Only call expressions may be deferred.", "defer resource.close();");
+        if (!(expr instanceof Expression.Call call)) throw new DeclarationError("Expected call expression after 'defer'", expr.span(), "Only call expressions may be deferred.", "defer resource.close();");
         IToken semi = expectSemiColon();
 
         return new Statement.Defer(keyword, call, new SourceSpan(keyword.span().start(), semi.span().end()));
@@ -557,7 +559,7 @@ public class StatementParser extends ParserPart<Statement.Block> {
     private Statement.Block parseNestedBlock() {
         IToken open = advance(); // consume '{'
         Statement.Block block = parseBlock();
-        IToken close = expect(Tokens.Operator.RightBrace, () -> new CompileError("Expected '}'", peek().span(), "Expected closing brace for block.", "{ stmt; }"));
+        IToken close = expect(Tokens.Operator.RightBrace, CommonErrors.EXPECTED_CLOSE_BRACE);
 
         return new Statement.Block(block.statements(), new SourceSpan(open.span().start(), close.span().end()));
     }
@@ -626,20 +628,17 @@ public class StatementParser extends ParserPart<Statement.Block> {
             IToken op = advance();
             Expression value = new ExpressionParser(getLexer(), getFile()).parse();
             IToken semi = expectSemiColon();
-            return new Statement.Assignment(expr, op, value,
-                    new SourceSpan(expr.span().start(), semi.span().end()));
+            return new Statement.Assignment(expr, op, value, new SourceSpan(expr.span().start(), semi.span().end()));
         }
 
         if (is(Tokens.Operator.PlusPlus) || is(Tokens.Operator.MinusMinus)) {
             IToken op = advance();
             IToken semi = expectSemiColon();
-            return new Statement.IncrementDecrement(expr, op, false,
-                    new SourceSpan(expr.span().start(), semi.span().end()));
+            return new Statement.IncrementDecrement(expr, op, false, new SourceSpan(expr.span().start(), semi.span().end()));
         }
 
         IToken semi = expectSemiColon();
-        return new Statement.ExpressionStmt(expr,
-                new SourceSpan(expr.span().start(), semi.span().end()));
+        return new Statement.ExpressionStmt(expr, new SourceSpan(expr.span().start(), semi.span().end()));
     }
 
 }

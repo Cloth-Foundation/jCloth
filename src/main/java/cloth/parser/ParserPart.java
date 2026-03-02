@@ -1,7 +1,9 @@
 package cloth.parser;
 
+import cloth.error.CommonErrors;
 import cloth.error.Error;
 import cloth.error.errors.CompileError;
+import cloth.error.errors.ModifierError;
 import cloth.file.SourceFile;
 import cloth.lexer.Lexer;
 import cloth.parser.flags.DeclarationFlags;
@@ -237,15 +239,57 @@ public abstract class ParserPart<T> implements Parsable<T> {
         throw error.get();
     }
 
+    // ── CommonErrors overloads ────────────────────────────────────────
+
+    @SneakyThrows
+    public IToken expect(TokenKind kind, CommonErrors error) {
+        if (is(kind)) return advance();
+        throw error.toError(peek().span());
+    }
+
+    @SneakyThrows
+    public IToken expect(TokenKind kind, CommonErrors error, String label) {
+        if (is(kind)) return advance();
+        throw error.toError(peek().span(), label);
+    }
+
+    @SneakyThrows
+    public IToken expect(Tokens.Keyword keyword, CommonErrors error) {
+        if (is(keyword)) return advance();
+        throw error.toError(peek().span());
+    }
+
+    @SneakyThrows
+    public IToken expect(Tokens.Keyword keyword, CommonErrors error, String label) {
+        if (is(keyword)) return advance();
+        throw error.toError(peek().span(), label);
+    }
+
+    @SneakyThrows
+    public IToken expect(Tokens.Operator operator, CommonErrors error) {
+        if (is(operator)) return advance();
+        throw error.toError(peek().span());
+    }
+
+    @SneakyThrows
+    public IToken expect(Tokens.Operator operator, CommonErrors error, String label) {
+        if (is(operator)) return advance();
+        throw error.toError(peek().span(), label);
+    }
+
+    // ── Semicolon shorthand ─────────────────────────────────────────
+
     /**
      * Ensures that the next token in the lexer stream is a semicolon.
-     * If the semicolon is not present, it throws a CompileError indicating
-     * that a semicolon was expected and provides suggestions to rectify the issue.
+     * Uses the previous token's span so the help string shows where the
+     * semicolon should have been inserted.
      *
      * @return The semicolon token if it is present in the lexer stream.
      */
+    @SneakyThrows
     public IToken expectSemiColon() {
-        return expect(Tokens.Operator.Semicolon, () -> new CompileError("Expected ';'", getLexer().getPreviousToken().span(), "Insert a semicolon at the end of the statement.", "Statements and expressions end with a semicolon."));
+        if (is(Tokens.Operator.Semicolon)) return advance();
+        throw CommonErrors.EXPECTED_SEMICOLON.toError(getLexer().getPreviousToken().span());
     }
 
     /**
@@ -298,7 +342,7 @@ public abstract class ParserPart<T> implements Parsable<T> {
         }
 
         if (flags.isAbstract() && flags.isFinal()) {
-            throw new CompileError(
+            throw new ModifierError(
                 "'abstract' and 'final' cannot be combined",
                 flags.getAbstractToken().span(),
                 "A declaration cannot be both abstract and final.",
@@ -326,14 +370,14 @@ public abstract class ParserPart<T> implements Parsable<T> {
             String existing = flags.getVisibility().name().toLowerCase();
             String incoming = peek().lexeme();
             if (existing.equals(incoming)) {
-                throw new CompileError(
+                throw new ModifierError(
                     "Duplicate modifier '" + existing + "'",
                     peek().span(),
                     "Remove the duplicate modifier.",
                     "Each modifier may only appear once."
                 );
             } else {
-                throw new CompileError(
+                throw new ModifierError(
                     "Conflicting visibility modifiers '" + existing + "' and '" + incoming + "'",
                     peek().span(),
                     "A declaration may have at most one visibility modifier.",
@@ -357,7 +401,7 @@ public abstract class ParserPart<T> implements Parsable<T> {
     @SneakyThrows
     private void rejectDuplicateModifier(boolean alreadySet, String name) {
         if (alreadySet) {
-            throw new CompileError(
+            throw new ModifierError(
                 "Duplicate modifier '" + name + "'",
                 peek().span(),
                 "Remove the duplicate modifier.",

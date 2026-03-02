@@ -1,6 +1,7 @@
 package cloth.parser.statements;
 
-import cloth.error.errors.CompileError;
+import cloth.error.CommonErrors;
+import cloth.error.errors.DeclarationError;
 import cloth.file.SourceFile;
 import cloth.lexer.Lexer;
 import cloth.parser.ParserPart;
@@ -35,33 +36,17 @@ public class FuncParser extends ParserPart<FuncParser.FuncDeclaration> {
     public FuncDeclaration parse() {
         DeclarationFlags flags = parseDeclarationFlags();
 
-        IToken funcKeyword = expect(Tokens.Keyword.Func, () ->
-            new CompileError("Expected 'func'", peek().span(),
-                "Expected a function declaration.",
-                "Function declarations begin with the 'func' keyword."));
-
-        IToken name = expect(TokenKind.Identifier, () ->
-            new CompileError("Expected function name", peek().span(),
-                "A function name must be a valid identifier.",
-                "func doSomething(): void { }"));
-
-        List<ParameterListParser.Parameter> parameters =
-            new ParameterListParser(getLexer(), getFile()).parse();
-
-        expect(Tokens.Operator.Colon, () ->
-            new CompileError("Expected ':' after parameters", peek().span(),
-                "Functions must specify a return type after the parameter list.",
-                "func add(a: i32, b: i32): i32 { ... }"));
-
-        TypeReferenceParser.TypeReference returnType =
-            new TypeReferenceParser(getLexer(), getFile()).parse();
-
+        IToken funcKeyword = expect(Tokens.Keyword.Func, CommonErrors.EXPECTED_KEYWORD_FUNC);
+        IToken name = expect(TokenKind.Identifier, CommonErrors.EXPECTED_IDENTIFIER, "Expected function name.");
+        List<ParameterListParser.Parameter> parameters = new ParameterListParser(getLexer(), getFile()).parse();
+        expect(Tokens.Operator.Colon, CommonErrors.EXPECTED_COLON, "Expected return type after parameters.");
+        TypeReferenceParser.TypeReference returnType = new TypeReferenceParser(getLexer(), getFile()).parse();
         Statement.Block body = null;
         IToken last;
 
         if (flags.isAbstract()) {
             if (is(Tokens.Operator.LeftBrace)) {
-                throw new CompileError(
+                throw new DeclarationError(
                     "Abstract methods must not have a body",
                     peek().span(),
                     "Remove the method body or the 'abstract' modifier.",
@@ -71,7 +56,7 @@ public class FuncParser extends ParserPart<FuncParser.FuncDeclaration> {
             last = expectSemiColon();
         } else {
             if (is(Tokens.Operator.Semicolon)) {
-                throw new CompileError(
+                throw new DeclarationError(
                     "Non-abstract methods must have a body",
                     peek().span(),
                     "Add a method body or mark the method 'abstract'.",
@@ -79,17 +64,11 @@ public class FuncParser extends ParserPart<FuncParser.FuncDeclaration> {
                 );
             }
 
-            expect(Tokens.Operator.LeftBrace, () ->
-                new CompileError("Expected '{'", peek().span(),
-                    "Expected opening brace for function body.",
-                    "func add(a: i32, b: i32): i32 { return a + b; }"));
+            expect(Tokens.Operator.LeftBrace, CommonErrors.EXPECTED_OPEN_BRACE);
 
             body = new StatementParser(getLexer(), getFile()).parseBlock();
 
-            last = expect(Tokens.Operator.RightBrace, () ->
-                new CompileError("Expected '}'", peek().span(),
-                    "Expected closing brace for function body.",
-                    "func add(a: i32, b: i32): i32 { return a + b; }"));
+            last = expect(Tokens.Operator.RightBrace, CommonErrors.EXPECTED_CLOSE_BRACE);
         }
 
         IToken firstFlag = flags.firstToken();

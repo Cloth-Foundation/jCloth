@@ -1,6 +1,6 @@
 package cloth.parser.statements;
 
-import cloth.error.errors.CompileError;
+import cloth.error.CommonErrors;
 import cloth.file.SourceFile;
 import cloth.lexer.Lexer;
 import cloth.parser.ParserPart;
@@ -33,10 +33,7 @@ public class ParameterListParser extends ParserPart<List<ParameterListParser.Par
 
     @Override
     public List<Parameter> parse() {
-        expect(Tokens.Operator.LeftParen, () ->
-            new CompileError("Expected '('", peek().span(),
-                "Expected opening parenthesis for parameter list.",
-                "(name: Type, ...)"));
+        expect(Tokens.Operator.LeftParen, CommonErrors.EXPECTED_OPEN_PAREN);
 
         var params = new ArrayList<Parameter>();
 
@@ -47,10 +44,7 @@ public class ParameterListParser extends ParserPart<List<ParameterListParser.Par
             }
         }
 
-        expect(Tokens.Operator.RightParen, () ->
-            new CompileError("Expected ')'", peek().span(),
-                "Expected closing parenthesis for parameter list.",
-                "(name: Type, ...)"));
+        expect(Tokens.Operator.RightParen, CommonErrors.EXPECTED_CLOSE_PAREN);
 
         return params;
     }
@@ -59,15 +53,9 @@ public class ParameterListParser extends ParserPart<List<ParameterListParser.Par
 
     @SneakyThrows
     private Parameter parseParameter() {
-        IToken name = expect(TokenKind.Identifier, () ->
-            new CompileError("Expected parameter name", peek().span(),
-                "Expected an identifier for the parameter name.",
-                "name: Type"));
+        IToken name = expect(TokenKind.Identifier, CommonErrors.EXPECTED_IDENTIFIER, "Expected parameter name.");
 
-        expect(Tokens.Operator.Colon, () ->
-            new CompileError("Expected ':'", peek().span(),
-                "Expected ':' between parameter name and type.",
-                "name: Type"));
+        expect(Tokens.Operator.Colon, CommonErrors.EXPECTED_COLON, "Expected ':' between parameter name and type.");
 
         TypeReferenceParser.TypeReference type = parseTypeReference();
 

@@ -20,7 +20,6 @@ import java.util.List;
  * @author dain
  *
  */
-@SuppressWarnings("unused")
 public final class Ansi {
 
     // Color code strings from:

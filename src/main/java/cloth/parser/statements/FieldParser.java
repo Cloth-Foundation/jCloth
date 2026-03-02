@@ -1,6 +1,7 @@
 package cloth.parser.statements;
 
-import cloth.error.errors.CompileError;
+import cloth.error.CommonErrors;
+import cloth.error.errors.SyntaxError;
 import cloth.file.SourceFile;
 import cloth.lexer.Lexer;
 import cloth.parser.ParserPart;
@@ -48,7 +49,7 @@ public class FieldParser extends ParserPart<FieldParser.FieldDeclaration> {
             bindingToken = advance();
         } else {
             if (flags.hasFlags()) {
-                throw new CompileError(
+                throw new SyntaxError(
                     "Expected a declaration after modifiers",
                     peek().span(),
                     "Modifiers must be followed by 'var', 'let', 'const', 'class', 'func', etc.",
@@ -58,15 +59,9 @@ public class FieldParser extends ParserPart<FieldParser.FieldDeclaration> {
             return null;
         }
 
-        IToken name = expect(TokenKind.Identifier, () ->
-            new CompileError("Expected field name", peek().span(),
-                "Expected an identifier for the field name.",
-                "var name: Type = value;"));
+        IToken name = expect(TokenKind.Identifier, CommonErrors.EXPECTED_IDENTIFIER, "Expected field name.");
 
-        expect(Tokens.Operator.Colon, () ->
-            new CompileError("Expected ':'", peek().span(),
-                "Expected ':' between field name and type.",
-                "var name: Type;"));
+        expect(Tokens.Operator.Colon, CommonErrors.EXPECTED_COLON, "Expected ':' between field name and type.");
 
         TypeReferenceParser.TypeReference type =
             new TypeReferenceParser(getLexer(), getFile()).parse();

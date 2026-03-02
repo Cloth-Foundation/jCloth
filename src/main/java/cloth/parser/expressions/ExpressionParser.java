@@ -1,6 +1,6 @@
 package cloth.parser.expressions;
 
-import cloth.error.errors.CompileError;
+import cloth.error.CommonErrors;
 import cloth.file.SourceFile;
 import cloth.lexer.Lexer;
 import cloth.parser.ParserPart;
@@ -94,10 +94,7 @@ public class ExpressionParser extends ParserPart<Expression> {
         if (is(Tokens.Operator.LeftParen)) {
             IToken open = advance();
             Expression inner = parseExpression(0);
-            IToken close = expect(Tokens.Operator.RightParen, () ->
-                new CompileError("Expected ')'", peek().span(),
-                    "Unclosed parenthesized expression.",
-                    "(a + b)"));
+            IToken close = expect(Tokens.Operator.RightParen, CommonErrors.EXPECTED_CLOSE_PAREN, "Unclosed parenthesized expression.");
             return new Expression.Group(inner,
                 new SourceSpan(open.span().start(), close.span().end()));
         }
@@ -132,9 +129,8 @@ public class ExpressionParser extends ParserPart<Expression> {
             return new Expression.Identifier(token, token.span());
         }
 
-        throw new CompileError("Expected expression", peek().span(),
-            "Expected a literal, identifier, or prefix operator.",
-            "42, \"hello\", x, -x, !flag, new Foo(), (a + b)");
+        throw CommonErrors.EXPECTED_EXPRESSION.toError(peek().span(),
+            "Expected a literal, identifier, or prefix operator.");
     }
 
     @SneakyThrows
@@ -189,10 +185,7 @@ public class ExpressionParser extends ParserPart<Expression> {
         // Postfix: member access
         if (is(Tokens.Operator.Dot)) {
             advance();
-            IToken member = expect(TokenKind.Identifier, () ->
-                new CompileError("Expected member name after '.'", peek().span(),
-                    "Member access requires an identifier.",
-                    "obj.field"));
+            IToken member = expect(TokenKind.Identifier, CommonErrors.EXPECTED_IDENTIFIER, "Expected member name after '.'.");
             return new Expression.MemberAccess(left, member,
                 new SourceSpan(left.span().start(), member.span().end()));
         }
@@ -209,10 +202,7 @@ public class ExpressionParser extends ParserPart<Expression> {
         if (is(Tokens.Operator.LeftBracket)) {
             advance();
             Expression index = parseExpression(0);
-            IToken close = expect(Tokens.Operator.RightBracket, () ->
-                new CompileError("Expected ']'", peek().span(),
-                    "Unclosed array index expression.",
-                    "arr[0]"));
+            IToken close = expect(Tokens.Operator.RightBracket, CommonErrors.EXPECTED_CLOSE_BRACKET, "Unclosed array index expression.");
             return new Expression.Index(left, index,
                 new SourceSpan(left.span().start(), close.span().end()));
         }
@@ -221,10 +211,7 @@ public class ExpressionParser extends ParserPart<Expression> {
         if (is(Tokens.Operator.Question)) {
             advance();
             Expression thenExpr = parseExpression(0);
-            expect(Tokens.Operator.Colon, () ->
-                new CompileError("Expected ':' in ternary expression", peek().span(),
-                    "Ternary expressions require 'condition ? thenExpr : elseExpr'.",
-                    "x > 0 ? x : -x"));
+            expect(Tokens.Operator.Colon, CommonErrors.EXPECTED_COLON, "Ternary requires 'condition ? then : else'.");
             Expression elseExpr = parseExpression(leftBP); // right-assoc
             return new Expression.Ternary(left, thenExpr, elseExpr,
                 new SourceSpan(left.span().start(), elseExpr.span().end()));
@@ -252,10 +239,7 @@ public class ExpressionParser extends ParserPart<Expression> {
      */
     @SneakyThrows
     private List<Expression> parseArgumentList() {
-        expect(Tokens.Operator.LeftParen, () ->
-            new CompileError("Expected '('", peek().span(),
-                "Expected opening parenthesis for argument list.",
-                "func(a, b)"));
+        expect(Tokens.Operator.LeftParen, CommonErrors.EXPECTED_OPEN_PAREN);
 
         var args = new ArrayList<Expression>();
         if (!is(Tokens.Operator.RightParen)) {
@@ -264,10 +248,7 @@ public class ExpressionParser extends ParserPart<Expression> {
             } while (match(Tokens.Operator.Comma));
         }
 
-        expect(Tokens.Operator.RightParen, () ->
-            new CompileError("Expected ')'", peek().span(),
-                "Expected closing parenthesis for argument list.",
-                "func(a, b)"));
+        expect(Tokens.Operator.RightParen, CommonErrors.EXPECTED_CLOSE_PAREN);
 
         return args;
     }

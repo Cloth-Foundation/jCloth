@@ -1,6 +1,6 @@
 package cloth.parser.statements;
 
-import cloth.error.errors.CompileError;
+import cloth.error.CommonErrors;
 import cloth.file.SourceFile;
 import cloth.lexer.Lexer;
 import cloth.parser.ParserPart;
@@ -40,9 +40,7 @@ public class TypeReferenceParser extends ParserPart<TypeReferenceParser.TypeRefe
         if (is(TokenKind.Identifier) || is(TokenKind.Keyword)) {
             baseName = advance();
         } else {
-            throw new CompileError("Expected type", peek().span(),
-                "Expected a type name.",
-                "name: Type");
+            throw CommonErrors.EXPECTED_TYPE.toError(peek().span());
         }
 
         boolean nullable = false;
@@ -55,10 +53,7 @@ public class TypeReferenceParser extends ParserPart<TypeReferenceParser.TypeRefe
                 lastToken = advance();
             } else if (is(Tokens.Operator.LeftBracket)) {
                 advance();
-                lastToken = expect(Tokens.Operator.RightBracket, () ->
-                    new CompileError("Expected ']'", peek().span(),
-                        "Expected closing bracket for array type.",
-                        "Type[]"));
+                lastToken = expect(Tokens.Operator.RightBracket, CommonErrors.EXPECTED_CLOSE_BRACKET);
                 arrayDepth++;
             } else {
                 break;

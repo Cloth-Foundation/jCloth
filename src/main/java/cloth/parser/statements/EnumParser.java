@@ -1,6 +1,6 @@
 package cloth.parser.statements;
 
-import cloth.error.errors.CompileError;
+import cloth.error.CommonErrors;
 import cloth.file.SourceFile;
 import cloth.lexer.Lexer;
 import cloth.parser.ParserPart;
@@ -39,40 +39,23 @@ public class EnumParser extends ParserPart<EnumParser.EnumDeclaration> {
     @SneakyThrows
     public EnumDeclaration parse() {
         DeclarationFlags flags = parseDeclarationFlags();
-
-        IToken enumKeyword = expect(Tokens.Keyword.Enum, () ->
-            new CompileError("Expected 'enum'", peek().span(),
-                "Expected an enum declaration.",
-                "Enum declarations begin with the 'enum' keyword."));
-
-        IToken name = expect(TokenKind.Identifier, () ->
-            new CompileError("Expected enum name", peek().span(),
-                "An enum name must be a valid identifier.",
-                "enum Color { Red, Green, Blue }"));
-
+        IToken enumKeyword = expect(Tokens.Keyword.Enum, CommonErrors.EXPECTED_KEYWORD_ENUM);
+        IToken name = expect(TokenKind.Identifier, CommonErrors.EXPECTED_IDENTIFIER, "Expected enum name.");
         List<ParameterListParser.Parameter> primaryConstructor = null;
         if (is(Tokens.Operator.LeftParen)) {
             primaryConstructor = new ParameterListParser(getLexer(), getFile()).parse();
             hasPrimaryConstructor = true;
         }
 
-        expect(Tokens.Operator.LeftBrace, () ->
-            new CompileError("Expected '{'", peek().span(),
-                "Expected opening brace for enum body.",
-                "enum Color { Red, Green, Blue }"));
-
+        expect(Tokens.Operator.LeftBrace, CommonErrors.EXPECTED_OPEN_BRACE);
         List<EnumCase> cases = parseCases();
-
         var fields = new ArrayList<FieldParser.FieldDeclaration>();
         var methods = new ArrayList<FuncParser.FuncDeclaration>();
         if (match(Tokens.Operator.Semicolon)) {
             parseEnumMembers(fields, methods);
         }
 
-        IToken closeBrace = expect(Tokens.Operator.RightBrace, () ->
-            new CompileError("Expected '}'", peek().span(),
-                "Expected closing brace for enum body.",
-                "enum Color { Red, Green, Blue }"));
+        IToken closeBrace = expect(Tokens.Operator.RightBrace, CommonErrors.EXPECTED_CLOSE_BRACE);
 
         IToken firstFlag = flags.firstToken();
         SourceSpan span = new SourceSpan(
@@ -106,10 +89,7 @@ public class EnumParser extends ParserPart<EnumParser.EnumDeclaration> {
 
     @SneakyThrows
     private EnumCase parseCase() {
-        IToken caseName = expect(TokenKind.Identifier, () ->
-            new CompileError("Expected case name", peek().span(),
-                "Enum case names must be valid identifiers.",
-                "enum Color { Red, Green, Blue }"));
+        IToken caseName = expect(TokenKind.Identifier, CommonErrors.EXPECTED_IDENTIFIER, "Expected enum case name.");
 
         List<ParameterListParser.Parameter> payload = null;
         List<Expression> constructorArgs = null;
@@ -144,10 +124,7 @@ public class EnumParser extends ParserPart<EnumParser.EnumDeclaration> {
 
     @SneakyThrows
     private List<Expression> parseConstructorArgs() {
-        expect(Tokens.Operator.LeftParen, () ->
-            new CompileError("Expected '('", peek().span(),
-                "Expected constructor arguments.",
-                "CaseName(arg1, arg2)"));
+        expect(Tokens.Operator.LeftParen, CommonErrors.EXPECTED_OPEN_PAREN);
 
         var args = new ArrayList<Expression>();
         if (!is(Tokens.Operator.RightParen)) {
@@ -157,10 +134,7 @@ public class EnumParser extends ParserPart<EnumParser.EnumDeclaration> {
             }
         }
 
-        expect(Tokens.Operator.RightParen, () ->
-            new CompileError("Expected ')'", peek().span(),
-                "Expected closing parenthesis for constructor arguments.",
-                "CaseName(arg1, arg2)"));
+        expect(Tokens.Operator.RightParen, CommonErrors.EXPECTED_CLOSE_PAREN);
 
         return args;
     }

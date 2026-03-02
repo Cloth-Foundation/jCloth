@@ -1,6 +1,6 @@
 package cloth.parser.statements;
 
-import cloth.error.errors.CompileError;
+import cloth.error.CommonErrors;
 import cloth.file.SourceFile;
 import cloth.lexer.Lexer;
 import cloth.parser.ParserPart;
@@ -46,15 +46,9 @@ public class ClassParser extends ParserPart<ClassParser.ClassDeclaration> {
     public ClassDeclaration parse() {
         DeclarationFlags flags = parseDeclarationFlags();
 
-        IToken classKeyword = expect(Tokens.Keyword.Class, () ->
-            new CompileError("Expected 'class'", peek().span(),
-                "Expected a class declaration.",
-                "Class declarations begin with the 'class' keyword."));
+        IToken classKeyword = expect(Tokens.Keyword.Class, CommonErrors.EXPECTED_KEYWORD_CLASS);
 
-        IToken name = expect(TokenKind.Identifier, () ->
-            new CompileError("Expected class name", peek().span(),
-                "A class name must be a valid identifier.",
-                "class MyClass { }"));
+        IToken name = expect(TokenKind.Identifier, CommonErrors.EXPECTED_IDENTIFIER, "Expected class name.");
 
         List<ParameterListParser.Parameter> primaryParams = null;
         if (is(Tokens.Operator.LeftParen)) {
@@ -71,19 +65,13 @@ public class ClassParser extends ParserPart<ClassParser.ClassDeclaration> {
             interfaces = parseInterfaces();
         }
 
-        expect(Tokens.Operator.LeftBrace, () ->
-            new CompileError("Expected '{'", peek().span(),
-                "Expected opening brace for class body.",
-                "class MyClass { }"));
+        expect(Tokens.Operator.LeftBrace, CommonErrors.EXPECTED_OPEN_BRACE);
 
         var fields = new ArrayList<FieldParser.FieldDeclaration>();
         var methods = new ArrayList<FuncParser.FuncDeclaration>();
         parseClassBody(fields, methods);
 
-        IToken closeBrace = expect(Tokens.Operator.RightBrace, () ->
-            new CompileError("Expected '}'", peek().span(),
-                "Expected closing brace for class body.",
-                "class MyClass { }"));
+        IToken closeBrace = expect(Tokens.Operator.RightBrace, CommonErrors.EXPECTED_CLOSE_BRACE);
 
         IToken firstFlag = flags.firstToken();
         SourceSpan span = new SourceSpan(

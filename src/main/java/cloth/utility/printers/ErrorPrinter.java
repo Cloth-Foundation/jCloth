@@ -96,7 +96,7 @@ public class ErrorPrinter implements Printer<Error> {
     private static void printSpanned(Error error, Diagnostic sp) {
         SourceSpan span = sp.getSpan();
         if (span == null || !span.isValid()) {
-            out.println(Ansi.RED + "Error: " + reset() + error.getMessage());
+            out.println(Ansi.RED + error.getType().getDisplayName() + ": " + reset() + error.getMessage());
             return;
         }
 
@@ -254,7 +254,7 @@ public class ErrorPrinter implements Printer<Error> {
      */
     private static void header(Error error, SourceFile file, int startLine, int startCol) throws MalformedURLException {
         var fullPath = file.getFile().toURI().toURL();
-        out.println(Ansi.RED + Ansi.HIGH_INTENSITY + "Error: " + reset() + error.getMessage());
+        out.println(Ansi.RED + Ansi.HIGH_INTENSITY + error.getType().getDisplayName() + ": " + reset() + error.getMessage());
 
         boolean jetbrains = false;
         var parser = Main.getParser();

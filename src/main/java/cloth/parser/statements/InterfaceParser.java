@@ -1,6 +1,8 @@
 package cloth.parser.statements;
 
-import cloth.error.errors.CompileError;
+import cloth.error.CommonErrors;
+import cloth.error.errors.DeclarationError;
+import cloth.error.errors.ModifierError;
 import cloth.file.SourceFile;
 import cloth.lexer.Lexer;
 import cloth.parser.ParserPart;
@@ -40,27 +42,11 @@ public class InterfaceParser extends ParserPart<InterfaceParser.InterfaceDeclara
         rejectModifier(flags.isAbstract(), flags.getAbstractToken(), "abstract");
         rejectModifier(flags.isOverride(), flags.getOverrideToken(), "override");
 
-        IToken interfaceKeyword = expect(Tokens.Keyword.Interface, () ->
-            new CompileError("Expected 'interface'", peek().span(),
-                "Expected an interface declaration.",
-                "Interface declarations begin with the 'interface' keyword."));
-
-        IToken name = expect(TokenKind.Identifier, () ->
-            new CompileError("Expected interface name", peek().span(),
-                "An interface name must be a valid identifier.",
-                "interface Drawable { }"));
-
-        expect(Tokens.Operator.LeftBrace, () ->
-            new CompileError("Expected '{'", peek().span(),
-                "Expected opening brace for interface body.",
-                "interface Drawable { func draw(): void; }"));
-
+        IToken interfaceKeyword = expect(Tokens.Keyword.Interface, CommonErrors.EXPECTED_KEYWORD_INTERFACE);
+        IToken name = expect(TokenKind.Identifier, CommonErrors.EXPECTED_IDENTIFIER, "Expected interface name.");
+        expect(Tokens.Operator.LeftBrace, CommonErrors.EXPECTED_OPEN_BRACE);
         List<MethodSignature> methods = parseInterfaceBody();
-
-        IToken closeBrace = expect(Tokens.Operator.RightBrace, () ->
-            new CompileError("Expected '}'", peek().span(),
-                "Expected closing brace for interface body.",
-                "interface Drawable { func draw(): void; }"));
+        IToken closeBrace = expect(Tokens.Operator.RightBrace, CommonErrors.EXPECTED_CLOSE_BRACE);
 
         IToken firstFlag = flags.firstToken();
         SourceSpan span = new SourceSpan(
@@ -83,7 +69,7 @@ public class InterfaceParser extends ParserPart<InterfaceParser.InterfaceDeclara
             if (memberKw == Tokens.Keyword.Var
                 || memberKw == Tokens.Keyword.Let
                 || memberKw == Tokens.Keyword.Const) {
-                throw new CompileError(
+                throw new DeclarationError(
                     "Interfaces cannot declare fields",
                     peek().span(),
                     "Remove the field declaration.",
@@ -99,27 +85,18 @@ public class InterfaceParser extends ParserPart<InterfaceParser.InterfaceDeclara
 
     @SneakyThrows
     private MethodSignature parseMethodSignature() {
-        IToken funcKeyword = expect(Tokens.Keyword.Func, () ->
-            new CompileError("Expected method signature", peek().span(),
-                "Interface members must be method signatures starting with 'func'.",
-                "func draw(): void;"));
+        IToken funcKeyword = expect(Tokens.Keyword.Func, CommonErrors.EXPECTED_KEYWORD_FUNC, "Interface members must be method signatures.");
 
-        IToken methodName = expect(TokenKind.Identifier, () ->
-            new CompileError("Expected method name", peek().span(),
-                "A method name must be a valid identifier.",
-                "func draw(): void;"));
+        IToken methodName = expect(TokenKind.Identifier, CommonErrors.EXPECTED_IDENTIFIER, "Expected method name.");
 
         List<ParameterListParser.Parameter> parameters = new ParameterListParser(getLexer(), getFile()).parse();
 
-        expect(Tokens.Operator.Colon, () ->
-            new CompileError("Expected ':' after parameters", peek().span(),
-                "Interface methods must specify a return type.",
-                "func draw(): void;"));
+        expect(Tokens.Operator.Colon, CommonErrors.EXPECTED_COLON, "Interface methods must specify a return type.");
 
         TypeReferenceParser.TypeReference returnType = new TypeReferenceParser(getLexer(), getFile()).parse();
 
         if (is(Tokens.Operator.LeftBrace)) {
-            throw new CompileError(
+            throw new DeclarationError(
                 "Interface methods must not have a body",
                 peek().span(),
                 "Remove the method body. Interface methods are signatures only.",
@@ -140,7 +117,7 @@ public class InterfaceParser extends ParserPart<InterfaceParser.InterfaceDeclara
     @SneakyThrows
     private void rejectModifier(boolean present, IToken token, String name) {
         if (present) {
-            throw new CompileError(
+            throw new ModifierError(
                 "'" + name + "' is not valid on an interface",
                 token.span(),
                 "Remove the '" + name + "' modifier.",

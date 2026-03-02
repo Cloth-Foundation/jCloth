@@ -1,6 +1,6 @@
 package cloth.parser.statements;
 
-import cloth.error.errors.CompileError;
+import cloth.error.CommonErrors;
 import cloth.file.SourceFile;
 import cloth.lexer.Lexer;
 import cloth.parser.ParserPart;
@@ -51,7 +51,7 @@ public final class ModuleParser extends ParserPart<ModuleParser.Module> {
      */
     @Override
     public Module parse() {
-        expect(Tokens.Keyword.Module, () -> new CompileError("Module must be declared at top level.", peek().span(), "You must declare the module for this Cloth Object.", "Insert module <relative.source.path>"));
+        expect(Tokens.Keyword.Module, CommonErrors.EXPECTED_KEYWORD_MODULE, "Module must be declared at top level.");
 
         var name = new QualifiedNameParser(getLexer(), getFile()).parse();
         expectSemiColon();
