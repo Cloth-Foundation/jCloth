@@ -1,7 +1,6 @@
 package cloth.parser.statements;
 
 import cloth.error.CommonErrors;
-import cloth.error.errors.DeclarationError;
 import cloth.file.SourceFile;
 import cloth.lexer.Lexer;
 import cloth.parser.ParserPart;
@@ -46,22 +45,12 @@ public class FuncParser extends ParserPart<FuncParser.FuncDeclaration> {
 
         if (flags.isAbstract()) {
             if (is(Tokens.Operator.LeftBrace)) {
-                throw new DeclarationError(
-                    "Abstract methods must not have a body",
-                    peek().span(),
-                    "Remove the method body or the 'abstract' modifier.",
-                    "abstract func compute(): i32;"
-                );
+                throw CommonErrors.ABSTRACT_METHOD_HAS_BODY.toError(peek().span());
             }
             last = expectSemiColon();
         } else {
             if (is(Tokens.Operator.Semicolon)) {
-                throw new DeclarationError(
-                    "Non-abstract methods must have a body",
-                    peek().span(),
-                    "Add a method body or mark the method 'abstract'.",
-                    "func compute(): i32 { return 42; }"
-                );
+                throw CommonErrors.METHOD_MISSING_BODY.toError(peek().span());
             }
 
             expect(Tokens.Operator.LeftBrace, CommonErrors.EXPECTED_OPEN_BRACE);

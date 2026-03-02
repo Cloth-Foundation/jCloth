@@ -1,7 +1,6 @@
 package cloth.parser.statements;
 
 import cloth.error.CommonErrors;
-import cloth.error.errors.ModifierError;
 import cloth.file.SourceFile;
 import cloth.lexer.Lexer;
 import cloth.parser.ParserPart;
@@ -48,20 +47,16 @@ public class StructParser extends ParserPart<StructParser.StructDeclaration> {
         DeclarationFlags flags = parseDeclarationFlags();
 
         if (flags.isAbstract()) {
-            throw new ModifierError(
-                "Structs cannot be abstract",
+            throw CommonErrors.INVALID_MODIFIER.toFormattedErrorWithLabel(
                 flags.getAbstractToken().span(),
-                "Remove the 'abstract' modifier.",
-                "Structs are value types and do not support abstract members or inheritance."
-            );
+                "Structs are value types and do not support abstract members or inheritance.",
+                "abstract", "a struct");
         }
         if (flags.isOverride()) {
-            throw new ModifierError(
-                "'override' is not valid on a struct",
+            throw CommonErrors.INVALID_MODIFIER.toFormattedErrorWithLabel(
                 flags.getOverrideToken().span(),
-                "Remove the 'override' modifier.",
-                "Structs are value types and do not participate in inheritance."
-            );
+                "Structs are value types and do not participate in inheritance.",
+                "override", "a struct");
         }
 
         IToken structKeyword = expect(Tokens.Keyword.Struct, CommonErrors.EXPECTED_KEYWORD_STRUCT);

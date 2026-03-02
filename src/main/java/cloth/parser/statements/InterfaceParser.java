@@ -1,8 +1,6 @@
 package cloth.parser.statements;
 
 import cloth.error.CommonErrors;
-import cloth.error.errors.DeclarationError;
-import cloth.error.errors.ModifierError;
 import cloth.file.SourceFile;
 import cloth.lexer.Lexer;
 import cloth.parser.ParserPart;
@@ -69,12 +67,7 @@ public class InterfaceParser extends ParserPart<InterfaceParser.InterfaceDeclara
             if (memberKw == Tokens.Keyword.Var
                 || memberKw == Tokens.Keyword.Let
                 || memberKw == Tokens.Keyword.Const) {
-                throw new DeclarationError(
-                    "Interfaces cannot declare fields",
-                    peek().span(),
-                    "Remove the field declaration.",
-                    "Interface members must be method signatures."
-                );
+                throw CommonErrors.INTERFACE_NO_FIELDS.toError(peek().span());
             }
 
             methods.add(parseMethodSignature());
@@ -96,12 +89,7 @@ public class InterfaceParser extends ParserPart<InterfaceParser.InterfaceDeclara
         TypeReferenceParser.TypeReference returnType = new TypeReferenceParser(getLexer(), getFile()).parse();
 
         if (is(Tokens.Operator.LeftBrace)) {
-            throw new DeclarationError(
-                "Interface methods must not have a body",
-                peek().span(),
-                "Remove the method body. Interface methods are signatures only.",
-                "func draw(): void;"
-            );
+            throw CommonErrors.INTERFACE_NO_METHOD_BODY.toError(peek().span());
         }
 
         IToken semi = expectSemiColon();
@@ -117,12 +105,10 @@ public class InterfaceParser extends ParserPart<InterfaceParser.InterfaceDeclara
     @SneakyThrows
     private void rejectModifier(boolean present, IToken token, String name) {
         if (present) {
-            throw new ModifierError(
-                "'" + name + "' is not valid on an interface",
+            throw CommonErrors.INVALID_MODIFIER.toFormattedErrorWithLabel(
                 token.span(),
-                "Remove the '" + name + "' modifier.",
-                "Interfaces may only have a visibility modifier (public, private, internal)."
-            );
+                "Interfaces may only have a visibility modifier (public, private, internal).",
+                name, "an interface");
         }
     }
 

@@ -2,8 +2,8 @@ package cloth.parser;
 
 import cloth.error.CommonErrors;
 import cloth.error.Error;
+import cloth.error.ErrorBuilder;
 import cloth.error.errors.CompileError;
-import cloth.error.errors.ModifierError;
 import cloth.file.SourceFile;
 import cloth.lexer.Lexer;
 import cloth.parser.flags.DeclarationFlags;
@@ -239,7 +239,7 @@ public abstract class ParserPart<T> implements Parsable<T> {
         throw error.get();
     }
 
-    // ── CommonErrors overloads ────────────────────────────────────────
+    // ── CommonErrors overloads (default to SyntaxError) ────────────────
 
     @SneakyThrows
     public IToken expect(TokenKind kind, CommonErrors error) {
@@ -275,6 +275,44 @@ public abstract class ParserPart<T> implements Parsable<T> {
     public IToken expect(Tokens.Operator operator, CommonErrors error, String label) {
         if (is(operator)) return advance();
         throw error.toError(peek().span(), label);
+    }
+
+    // ── CommonErrors overloads with ErrorBuilder ─────────────────────
+
+    @SneakyThrows
+    public <E extends CompileError> IToken expect(TokenKind kind, CommonErrors error, ErrorBuilder<E> builder) {
+        if (is(kind)) return advance();
+        throw error.toError(peek().span(), builder);
+    }
+
+    @SneakyThrows
+    public <E extends CompileError> IToken expect(TokenKind kind, CommonErrors error, String label, ErrorBuilder<E> builder) {
+        if (is(kind)) return advance();
+        throw error.toError(peek().span(), label, builder);
+    }
+
+    @SneakyThrows
+    public <E extends CompileError> IToken expect(Tokens.Keyword keyword, CommonErrors error, ErrorBuilder<E> builder) {
+        if (is(keyword)) return advance();
+        throw error.toError(peek().span(), builder);
+    }
+
+    @SneakyThrows
+    public <E extends CompileError> IToken expect(Tokens.Keyword keyword, CommonErrors error, String label, ErrorBuilder<E> builder) {
+        if (is(keyword)) return advance();
+        throw error.toError(peek().span(), label, builder);
+    }
+
+    @SneakyThrows
+    public <E extends CompileError> IToken expect(Tokens.Operator operator, CommonErrors error, ErrorBuilder<E> builder) {
+        if (is(operator)) return advance();
+        throw error.toError(peek().span(), builder);
+    }
+
+    @SneakyThrows
+    public <E extends CompileError> IToken expect(Tokens.Operator operator, CommonErrors error, String label, ErrorBuilder<E> builder) {
+        if (is(operator)) return advance();
+        throw error.toError(peek().span(), label, builder);
     }
 
     // ── Semicolon shorthand ─────────────────────────────────────────
@@ -342,12 +380,7 @@ public abstract class ParserPart<T> implements Parsable<T> {
         }
 
         if (flags.isAbstract() && flags.isFinal()) {
-            throw new ModifierError(
-                "'abstract' and 'final' cannot be combined",
-                flags.getAbstractToken().span(),
-                "A declaration cannot be both abstract and final.",
-                "'abstract' means it must be overridden; 'final' means it cannot be."
-            );
+            throw CommonErrors.ABSTRACT_FINAL_CONFLICT.toError(flags.getAbstractToken().span());
         }
 
         return flags;
@@ -370,19 +403,10 @@ public abstract class ParserPart<T> implements Parsable<T> {
             String existing = flags.getVisibility().name().toLowerCase();
             String incoming = peek().lexeme();
             if (existing.equals(incoming)) {
-                throw new ModifierError(
-                    "Duplicate modifier '" + existing + "'",
-                    peek().span(),
-                    "Remove the duplicate modifier.",
-                    "Each modifier may only appear once."
-                );
+                throw CommonErrors.DUPLICATE_MODIFIER.toFormattedError(peek().span(), existing);
             } else {
-                throw new ModifierError(
-                    "Conflicting visibility modifiers '" + existing + "' and '" + incoming + "'",
-                    peek().span(),
-                    "A declaration may have at most one visibility modifier.",
-                    "Choose one of: public, private, or internal."
-                );
+                throw CommonErrors.CONFLICTING_VISIBILITY.toFormattedError(peek().span(),
+                    existing, incoming);
             }
         }
     }
@@ -401,12 +425,7 @@ public abstract class ParserPart<T> implements Parsable<T> {
     @SneakyThrows
     private void rejectDuplicateModifier(boolean alreadySet, String name) {
         if (alreadySet) {
-            throw new ModifierError(
-                "Duplicate modifier '" + name + "'",
-                peek().span(),
-                "Remove the duplicate modifier.",
-                "Each modifier may only appear once."
-            );
+            throw CommonErrors.DUPLICATE_MODIFIER.toFormattedError(peek().span(), name);
         }
     }
 

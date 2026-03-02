@@ -219,7 +219,7 @@ public class StructParserTests {
     @Test
     public void testAbstractStructRejected() {
         var ex = assertThrows(CompileError.class, () -> parseStruct("abstract struct Foo {}"));
-        assertTrue(ex.getMessage().contains("Structs cannot be abstract"));
+        assertTrue(ex.getMessage().contains("'abstract' is not valid on a struct"));
     }
 
     @Test

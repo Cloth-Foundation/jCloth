@@ -1,7 +1,6 @@
 package cloth.parser.statements;
 
 import cloth.error.CommonErrors;
-import cloth.error.errors.DeclarationError;
 import cloth.error.errors.SyntaxError;
 import cloth.file.SourceFile;
 import cloth.lexer.Lexer;
@@ -536,7 +535,7 @@ public class StatementParser extends ParserPart<Statement.Block> {
     private Statement.Defer parseDefer() {
         IToken keyword = advance(); // consume 'defer'
         Expression expr = new ExpressionParser(getLexer(), getFile()).parse();
-        if (!(expr instanceof Expression.Call call)) throw new DeclarationError("Expected call expression after 'defer'", expr.span(), "Only call expressions may be deferred.", "defer resource.close();");
+        if (!(expr instanceof Expression.Call call)) throw CommonErrors.DEFER_REQUIRES_CALL.toError(expr.span());
         IToken semi = expectSemiColon();
 
         return new Statement.Defer(keyword, call, new SourceSpan(keyword.span().start(), semi.span().end()));
